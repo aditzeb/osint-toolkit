@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SNOOP — case workbench</title>
+<style>
+  :root{
+    --ink:#0f1012; --panel:#15171a; --panel2:#1b1e22; --raise:#21252a;
+    --rule:#272b30; --rule2:#363b42;
+    --paper:#e4e4e0; --dim:#9ba0a6; --dimmer:#666c73;
+    --linked:#58a37a; --excluded:#c25a4b; --open:#c79c42; --lead:#7096bb;
+    --ui:"Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;
+    --serif:Georgia,Cambria,"Iowan Old Style","Palatino Linotype",serif;
+    --mono:ui-monospace,Consolas,"SF Mono",Menlo,monospace;
+    --r:3px;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{margin:0;background:var(--ink);color:var(--paper);font:13.5px/1.5 var(--ui);-webkit-font-smoothing:antialiased}
+  a{color:var(--lead);text-decoration:none}
+  a:hover{text-decoration:underline}
+  button,input,select,textarea{font:inherit;color:inherit}
+  ::selection{background:#34506b}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:var(--rule2);border:2px solid var(--ink);border-radius:6px}
+  :focus-visible{outline:2px solid var(--lead);outline-offset:1px}
+  .mono{font-family:var(--mono)}
+  .muted{color:var(--dim)} .faint{color:var(--dimmer)}
+
+  /* ---------- frame ---------- */
+  .app{display:flex;flex-direction:column;height:100vh}
+  .topbar{display:flex;align-items:center;gap:16px;height:46px;padding:0 18px;border-bottom:1px solid var(--rule);background:var(--panel)}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand b{font:700 15px var(--ui);letter-spacing:.2em}
+  .brand span{color:var(--dimmer);font-size:12px}
+  .topmeta{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .prov{display:flex;gap:10px;font:11.5px var(--ui);color:var(--dimmer)}
+  .prov i{font-style:normal;display:inline-flex;align-items:center;gap:5px}
+  .prov i::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--rule2)}
+  .prov i.on{color:var(--dim)} .prov i.on::before{background:var(--linked)}
+  select.case-select{background:var(--panel2);border:1px solid var(--rule2);border-radius:var(--r);padding:5px 8px;max-width:260px;font-size:12.5px}
+  .tbtn{background:var(--panel2);border:1px solid var(--rule2);border-radius:var(--r);padding:5px 12px;font-size:12.5px;cursor:pointer;color:var(--paper)}
+  .tbtn:hover:not(:disabled){background:var(--raise);border-color:#4a5058}
+  .tbtn:disabled{opacity:.4;cursor:default}
+  .tbtn.primary{background:#2d5a44;border-color:#3b7358}
+  .tbtn.primary:hover:not(:disabled){background:#356a50}
+
+  /* case header */
+  .casebar{display:flex;align-items:center;gap:18px;padding:10px 18px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+  .caseid{display:flex;flex-direction:column;min-width:0}
+  .caseno{font:11.5px var(--mono);color:var(--dimmer)}
+  .casetitle{font:600 20px/1.2 var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+  .flag{display:inline-flex;align-items:center;gap:7px;font:600 11px var(--ui);letter-spacing:.06em;padding:3px 8px;
+    border:1px solid var(--rule2);border-radius:var(--r);color:var(--dim)}
+  .flag.running{color:var(--lead);border-color:#3d5a78}
+  .flag.running::before{content:"";width:7px;height:7px;background:var(--lead);animation:blink 1s steps(2) infinite}
+  .flag.waiting{color:var(--open);border-color:#6b5628}
+  .flag.done{color:var(--linked);border-color:#335c46}
+  .flag.stopped{color:var(--excluded);border-color:#6a352d}
+  @keyframes blink{50%{opacity:.15}}
+  .stage{color:var(--dim);font-size:12.5px;min-width:0;max-width:34vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .toolbar{margin-left:auto;display:flex;align-items:center;gap:6px}
+  .tsep{width:1px;height:20px;background:var(--rule2);margin:0 4px}
+
+  .metrics{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--rule)}
+  .metric{padding:8px 18px;border-right:1px solid var(--rule);transition:background .6s}
+  .metric:last-child{border-right:0}
+  .metric b{display:block;font:600 19px/1.1 var(--ui);font-variant-numeric:tabular-nums}
+  .metric span{font-size:11.5px;color:var(--dimmer)}
+  .metric.tick{background:#1f2a36;transition:none}
+
+  main{flex:1;min-height:0;display:flex}
+
+  /* ---------- intake ---------- */
+  .intake{flex:1;overflow:auto;padding:48px 20px}
+  .intake-inner{max-width:760px;margin:0 auto}
+  .intake h1{font:600 28px/1.2 var(--serif);margin:0 0 4px}
+  .intake .lede{color:var(--dim);margin:0 0 26px}
+  .form{border:1px solid var(--rule);background:var(--panel);border-radius:var(--r)}
+  .frow{display:grid;grid-template-columns:150px 1fr;border-bottom:1px solid var(--rule)}
+  .frow:last-child{border-bottom:0}
+  .frow label.k{padding:12px 14px;color:var(--dim);font-size:12.5px;border-right:1px solid var(--rule);background:var(--panel2)}
+  .frow .v{padding:8px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+  .frow input[type=text]{flex:1;min-width:0;background:transparent;border:0;outline:none;padding:4px 0;font-size:14px}
+  .frow input#startTarget{font:17px var(--serif)}
+  .seg{display:inline-flex;border:1px solid var(--rule2);border-radius:var(--r);overflow:hidden}
+  .seg button{background:none;border:0;border-right:1px solid var(--rule2);padding:5px 12px;font-size:12.5px;color:var(--dim);cursor:pointer}
+  .seg button:last-child{border-right:0}
+  .seg button.on{background:var(--raise);color:var(--paper)}
+  .check{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dim);cursor:pointer}
+  .intake .submit{display:flex;justify-content:flex-end;margin-top:12px}
+  .intake .submit .tbtn{padding:8px 20px;font-size:13.5px}
+  .recent{margin-top:34px}
+  .recent h2{font:600 13px var(--ui);color:var(--dim);margin:0 0 8px}
+
+  /* ---------- workspace ---------- */
+  .workspace{flex:1;min-width:0;display:grid;grid-template-columns:300px minmax(0,1fr) 0}
+  .workspace.inspector-open{grid-template-columns:300px minmax(0,1fr) 370px}
+  .pane{min-height:0;display:flex;flex-direction:column}
+  .panehead{display:flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-bottom:1px solid var(--rule);
+    font:600 12px var(--ui);color:var(--dim);background:var(--panel)}
+  .panehead .faint{font-weight:400}
+  .activity{border-right:1px solid var(--rule)}
+  .log{flex:1;overflow-y:auto;padding:4px 0;font-size:12px}
+  .lg{display:grid;grid-template-columns:56px 58px 1fr;gap:6px;padding:3px 12px;align-items:baseline}
+  .lg:hover{background:var(--panel)}
+  .lg time{font:11px var(--mono);color:var(--dimmer)}
+  .lg .code{font:600 10px var(--mono);color:var(--dim)}
+  .lg .tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c9cac6}
+  .lg .tx i{font-style:normal;color:var(--dimmer)}
+  .lg.new{animation:rowin .35s ease-out}
+  @keyframes rowin{from{background:#1f2a36}to{background:transparent}}
+  .lg.t-search .code{color:var(--lead)} .lg.t-read .code{color:var(--paper)}
+  .lg.t-found .code,.lg.t-exhibit .code{color:var(--linked)}
+  .lg.t-warn .code,.lg.t-input .code{color:var(--open)} .lg.t-error .code,.lg.t-blocked .code{color:var(--excluded)}
+  .lg.t-agent .tx{color:var(--dim)}
+
+  .views{min-width:0;min-height:0;display:flex;flex-direction:column}
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);background:var(--panel);overflow-x:auto;flex-shrink:0}
+  .tab{background:none;border:0;border-right:1px solid var(--rule);padding:0 16px;height:34px;font-size:12.5px;color:var(--dim);cursor:pointer;white-space:nowrap;position:relative}
+  .tab:hover{color:var(--paper)}
+  .tab.on{color:var(--paper);background:var(--ink)}
+  .tab.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--ink)}
+  .tab .n{font:11px var(--mono);color:var(--dimmer);margin-left:6px}
+  .viewport{flex:1;overflow-y:auto;padding:20px 22px 30px}
+  .view{display:none}
+  .view.on{display:block;animation:fade .18s ease}
+  @keyframes fade{from{opacity:.4}to{opacity:1}}
+  .banner{margin:12px 22px 0;padding:8px 12px;border:1px solid #6b5628;border-left-width:3px;background:#1d1a12;color:#d9c08a;font-size:12.5px;border-radius:var(--r)}
+
+  /* blocks */
+  .block{margin-bottom:22px}
+  .bh{display:flex;align-items:baseline;gap:10px;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--rule)}
+  .bh h2{font:600 13.5px var(--ui);margin:0}
+  .bh .faint{font-size:12px}
+  .bh .right{margin-left:auto}
+  .empty{padding:36px 10px;text-align:center;color:var(--dimmer)}
+
+  /* subject */
+  .subject{display:flex;gap:24px;align-items:flex-start;padding:4px 0 18px;border-bottom:1px solid var(--rule);margin-bottom:20px}
+  .subject-main{flex:1;min-width:0}
+  .subject-name{font:600 32px/1.15 var(--serif);margin:2px 0 12px}
+  .facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 22px}
+  .fact small{display:block;font-size:11.5px;color:var(--dimmer)}
+  .fact span{font-size:13px}
+  .stamp{flex-shrink:0;margin-top:8px;padding:6px 14px;border:2px solid currentColor;border-radius:4px;
+    font:700 13px/1 var(--mono);letter-spacing:.14em;transform:rotate(-4deg);opacity:.9}
+  .stamp.supported{color:var(--linked)} .stamp.unverified{color:var(--open)}
+  .stamp.fresh{animation:stamp .42s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes stamp{0%{transform:rotate(-4deg) scale(1.9);opacity:0}100%{transform:rotate(-4deg) scale(1);opacity:.9}}
+
+  /* analyst input */
+  .ask{border:1px solid #6b5628;border-left:3px solid var(--open);background:#19170f;border-radius:var(--r);padding:14px 16px;margin-bottom:22px}
+  .ask .head{display:flex;gap:10px;align-items:baseline;margin-bottom:6px}
+  .ask .head b{font-size:12px;color:var(--open)}
+  .ask .head .qtimer{margin-left:auto;font:11.5px var(--mono);color:var(--dim)}
+  .ask .q{font:15px/1.45 var(--serif);margin:0 0 6px}
+  .ask .why{font-size:12px;color:var(--dim)}
+  .ask .open{display:inline-block;margin:8px 0 0;font:12px var(--mono)}
+  .ask form{margin-top:10px}
+  .ask input[type=text],.ask textarea{width:100%;background:var(--ink);border:1px solid var(--rule2);border-radius:var(--r);padding:8px 10px;outline:none}
+  .ask textarea{min-height:92px;resize:vertical;font:12.5px/1.5 var(--mono)}
+  .ask input:focus,.ask textarea:focus{border-color:var(--open)}
+  .ask .row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .ask .row .faint{font-size:11.5px;margin-left:auto}
+
+  /* findings */
+  .findings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+  .col{border:1px solid var(--rule);border-radius:var(--r);background:var(--panel);min-width:0}
+  .col header{display:flex;align-items:baseline;gap:8px;padding:8px 12px;border-bottom:1px solid var(--rule);border-top:3px solid var(--rule2);border-radius:var(--r) var(--r) 0 0}
+  .col header b{font-size:12.5px} .col header .n{margin-left:auto;font:600 12px var(--mono);color:var(--dim)}
+  .col.linked header{border-top-color:var(--linked)} .col.open header{border-top-color:var(--open)} .col.excluded header{border-top-color:var(--excluded)}
+  .col .none{padding:14px 12px;color:var(--dimmer);font-size:12px}
+  .acct{display:grid;grid-template-columns:34px 1fr;gap:2px 8px;padding:8px 12px;border-bottom:1px solid var(--rule);cursor:pointer}
+  .acct:last-child{border-bottom:0}
+  .acct:hover,.acct.selected{background:var(--panel2)}
+  .acct .ref{font:600 11px var(--mono);color:var(--dim);grid-row:span 2;padding-top:1px}
+  .acct .p{font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acct .u{font:11px var(--mono);color:var(--dimmer);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .col.excluded .acct .p{color:var(--dim)}
+
+  /* tables */
+  .tablewrap{overflow-x:auto;border:1px solid var(--rule);border-radius:var(--r)}
+  table.grid{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.grid th{text-align:left;font-weight:600;font-size:11.5px;color:var(--dim);background:var(--panel);padding:7px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+  table.grid td{padding:7px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+  table.grid tr:last-child td{border-bottom:0}
+  table.grid tbody tr{cursor:pointer}
+  table.grid tbody tr:hover,table.grid tbody tr.selected{background:var(--panel)}
+  table.grid td.id{font:11.5px var(--mono);color:var(--dim);white-space:nowrap}
+  table.grid td.url{font:11.5px var(--mono);color:var(--dimmer);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  table.grid td.clip{max-width:420px}
+  table.grid td.t{font:11.5px var(--mono);color:var(--dimmer);white-space:nowrap}
+  tr.fresh td{animation:rowin .8s ease-out}
+  .st{font-size:11.5px;white-space:nowrap}
+  .st::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--dimmer)}
+  .st.ok::before{background:var(--linked)} .st.warn::before{background:var(--open)} .st.bad::before{background:var(--excluded)}
+  .kindtag{font-size:11px;color:var(--dim);border:1px solid var(--rule2);border-radius:2px;padding:0 5px;white-space:nowrap}
+  .kindtag.analyst{color:var(--open);border-color:#6b5628}
+  .filters{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  .filters input{background:var(--panel);border:1px solid var(--rule2);border-radius:var(--r);padding:5px 9px;min-width:220px;outline:none}
+  .filters input:focus{border-color:var(--lead)}
+
+  /* coverage */
+  .cov{display:grid;grid-template-columns:130px 1fr 70px;gap:6px 12px;align-items:center;font-size:12.5px}
+  .bar{height:6px;background:var(--panel2);border:1px solid var(--rule);border-radius:1px;overflow:hidden}
+  .bar i{display:block;height:100%;background:#4c6a88}
+  .gaps{margin:10px 0 0;padding-left:16px;color:var(--dim);font-size:12.5px}
+
+  .note{border-left:3px solid var(--lead);background:var(--panel);padding:10px 14px;border-radius:0 var(--r) var(--r) 0;font:14px/1.5 var(--serif)}
+  .note small{display:block;font:11.5px var(--ui);color:var(--dim);margin-bottom:4px}
+  .cite{display:inline-block;font:11px var(--mono);color:var(--dim);border:1px solid var(--rule2);border-radius:2px;padding:0 5px;margin:6px 4px 0 0;cursor:pointer;background:none}
+  .cite:hover{color:var(--paper);border-color:var(--lead)}
+  details.more{margin-top:8px}
+  details.more summary{cursor:pointer;color:var(--dim);font-size:12.5px;padding:4px 0}
+
+  /* link chart */
+  .chartbar{display:flex;align-items:center;gap:16px;margin-bottom:10px;flex-wrap:wrap;font-size:12px;color:var(--dim)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend svg{overflow:visible}
+  .chart{border:1px solid var(--rule);border-radius:var(--r);background:
+      linear-gradient(var(--rule) 1px,transparent 1px) 0 0/28px 28px,
+      linear-gradient(90deg,var(--rule) 1px,transparent 1px) 0 0/28px 28px,var(--panel);
+    background-blend-mode:normal;overflow:auto;position:relative}
+  .chart svg{display:block}
+  .chart .bgfade{fill:var(--panel);opacity:.82}
+  .edge{fill:none;stroke-width:1.4}
+  .edge.linked{stroke:var(--linked)} .edge.open{stroke:var(--open);stroke-dasharray:5 4}
+  .edge.excluded{stroke:var(--excluded);stroke-dasharray:2 4;opacity:.55}
+  .edge.mentions{stroke:#8a8f95} .edge.led_to{stroke:var(--lead)}
+  .edge.links_to{stroke:var(--paper)} .edge.shared_site{stroke:var(--lead);stroke-dasharray:6 3}
+  .edge.same_handle,.edge.same_image_url{stroke:var(--dimmer);stroke-dasharray:1 4}
+  .edge.draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .7s ease-out forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .elabel{font:10px var(--ui);fill:var(--dim);paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round}
+  .node{cursor:pointer}
+  .node .shape{fill:var(--panel2);stroke:var(--rule2);stroke-width:1.4}
+  .node .glyph{fill:var(--dim)}
+  .node text.nm{font:12px var(--ui);fill:var(--paper)}
+  .node text.sub{font:10.5px var(--mono);fill:var(--dimmer)}
+  .node.subject .shape{fill:#1f2a36;stroke:var(--lead);stroke-width:2}
+  .node.subject .glyph{fill:var(--lead)}
+  .node.subject text.nm{font:600 15px var(--serif)}
+  .node.linked .shape{stroke:var(--linked)} .node.open .shape{stroke:var(--open)}
+  .node.excluded{opacity:.55} .node.excluded .shape{stroke:var(--excluded)}
+  .node.blocked .shape{stroke-dasharray:3 2}
+  .node:hover .shape,.node.selected .shape{stroke:var(--paper)}
+  .node .enter{animation:nodein .45s ease-out both}
+  @keyframes nodein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .chart svg.focus .edge,.chart svg.focus .node,.chart svg.focus .elabel{opacity:.12;transition:opacity .15s}
+  .chart svg.focus .hl{opacity:1!important}
+
+  /* work log */
+  .steps{border:1px solid var(--rule);border-radius:var(--r)}
+  .step{display:grid;grid-template-columns:38px 150px minmax(0,1fr);border-bottom:1px solid var(--rule);cursor:pointer}
+  .step:last-child{border-bottom:0}
+  .step:hover{background:var(--panel)}
+  .step > div{padding:8px 10px;min-width:0}
+  .step .no{font:11.5px var(--mono);color:var(--dimmer);border-right:1px solid var(--rule)}
+  .step .act{border-right:1px solid var(--rule)}
+  .step .act b{display:block;font:600 12px var(--mono)}
+  .step .act span{font:11px var(--mono);color:var(--dimmer);word-break:break-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .step .res{font-size:12.5px;color:#c9cac6}
+  .step .res .why{display:block;color:var(--dim);font-size:12px;margin-bottom:3px}
+  .step .res .out{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:11.5px/1.5 var(--mono);color:var(--dim);white-space:pre-wrap;word-break:break-word}
+  .step.expanded .res .out{display:block}
+  .step.rejected .act b{color:var(--open)}
+  .step.live .no{color:var(--lead)}
+  .step.enter{animation:rowin .8s ease-out}
+  .runhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin:0 0 8px;font-size:12.5px;color:var(--dim)}
+
+  /* inspector */
+  .inspector{display:none;border-left:1px solid var(--rule);min-height:0}
+  .workspace.inspector-open .inspector{display:flex}
+  .insp-close{margin-left:auto;background:none;border:0;color:var(--dim);cursor:pointer;font-size:16px;line-height:1;padding:4px}
+  .inspbody{flex:1;overflow-y:auto;padding:14px}
+  .insp-title{font:600 16px/1.3 var(--serif);margin:0 0 10px;word-break:break-word}
+  .props{display:grid;grid-template-columns:96px 1fr;border:1px solid var(--rule);border-radius:var(--r);font-size:12.5px}
+  .props dt,.props dd{margin:0;padding:6px 9px;border-bottom:1px solid var(--rule)}
+  .props dt{color:var(--dim);background:var(--panel)}
+  .props dd{word-break:break-word}
+  .props dt:nth-last-of-type(1),.props dd:last-child{border-bottom:0}
+  .quote{margin:10px 0;padding:8px 11px;border-left:2px solid var(--rule2);background:var(--panel);font-size:12.5px;color:#c9cac6}
+  .quote small{display:block;color:var(--dimmer);font-size:11px;margin-top:4px}
+  .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+  .trace-h{font:600 12.5px var(--ui);color:var(--dim);margin:18px 0 8px}
+  .trace{list-style:none;margin:0;padding:0}
+  .trace li{position:relative;padding:0 0 10px 18px;margin-left:4px;border-left:1px solid var(--rule2);font-size:12px;color:var(--dim)}
+  .trace li::before{content:"";position:absolute;left:-4px;top:5px;width:7px;height:7px;background:var(--lead)}
+  .trace li:last-child{border-left-color:transparent;padding-bottom:0}
+  .trace li.end::before{background:var(--linked)}
+  .trace li b{color:var(--paper);font-weight:600}
+  .trace li code{font:11px var(--mono);color:var(--dimmer);display:block;word-break:break-all}
+
+  /* timeline */
+  .tl{position:relative;margin-left:90px;border-left:1px solid var(--rule2)}
+  .tle{position:relative;padding:0 0 14px 18px;cursor:pointer}
+  .tle::before{content:"";position:absolute;left:-4px;top:6px;width:7px;height:7px;background:var(--dim)}
+  .tle time{position:absolute;left:-92px;width:80px;text-align:right;font:11.5px var(--mono);color:var(--dimmer);top:2px}
+  .tle .w{font-size:13px}
+  .tle .s{font:11px var(--mono);color:var(--dimmer)}
+
+  /* composer */
+  .composer{border-top:1px solid var(--rule);background:var(--panel);padding:8px 18px;display:flex;gap:12px;align-items:center}
+  .composer form{flex:1;display:flex;align-items:center;gap:8px}
+  .composer label{font:11.5px var(--mono);color:var(--dimmer)}
+  .composer input{flex:1;min-width:0;background:var(--ink);border:1px solid var(--rule2);border-radius:var(--r);padding:7px 10px;font:13px var(--mono);outline:none}
+  .composer input:focus{border-color:var(--lead)}
+  .hints{display:flex;gap:4px}
+  .hints button{background:none;border:1px solid var(--rule);border-radius:var(--r);padding:3px 8px;font:11.5px var(--mono);color:var(--dim);cursor:pointer}
+  .hints button:hover{color:var(--paper);border-color:var(--rule2)}
+
+  /* ---------- simplified header + feed ---------- */
+  .statusline{display:flex;align-items:center;gap:10px;min-width:0}
+  .flag{letter-spacing:0;font:600 12px var(--ui);border-radius:12px;padding:3px 10px}
+  .stats{font-size:12.5px;color:var(--dim);margin-right:6px;transition:color .6s}
+  .stats.tick{color:var(--paper);transition:none}
+  .tbtn.big{padding:8px 18px;font-size:13.5px;font-weight:600}
+  .lg{grid-template-columns:40px 1fr;padding:5px 14px;font-size:12.5px}
+  .lg .code{display:none}
+  .lg .tx{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.4}
+  .lg .tx::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;margin:0 7px 1px 0;background:var(--rule2)}
+  .lg.t-search .tx::before{background:var(--lead)} .lg.t-read .tx::before{background:#8a8f95}
+  .lg.t-found .tx::before,.lg.t-exhibit .tx::before,.lg.t-fact .tx::before{background:var(--linked)}
+  .lg.t-warn .tx::before,.lg.t-input .tx::before{background:var(--open)}
+  .lg.t-error .tx::before,.lg.t-blocked .tx::before{background:var(--excluded)}
+  .subnav{margin-bottom:16px}
+  .sub{display:none}.sub.on{display:block;animation:fade .18s ease}
+
+  /* ---------- profile board ---------- */
+  .pfhead{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+  .pfhead p{margin:0;color:var(--dim);font-size:12.5px}
+  .pfhead .right{margin-left:auto;display:flex;gap:6px}
+  .keys{display:flex;gap:12px;font-size:11.5px;color:var(--dimmer);align-items:center;flex-wrap:wrap}
+  .pboard{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 230px minmax(0,1fr);gap:30px;align-items:start}
+  .pcol{display:flex;flex-direction:column;gap:18px;min-width:0;position:relative;z-index:1}
+  .figure{position:sticky;top:0;display:flex;flex-direction:column;align-items:center;padding-top:8px;z-index:1}
+  .figure svg{width:190px;height:auto;overflow:visible}
+  .part{fill:var(--panel2);stroke:#3d444c;stroke-width:1.6;transition:fill .7s,stroke .7s}
+  .part.lit{fill:#1b2733;stroke:#5a7fa3}
+  .anchor{fill:var(--ink);stroke:var(--lead);stroke-width:2;opacity:0;transition:opacity .4s}
+  .anchor.on{opacity:1}
+  .anchor.ping{animation:ping 1s ease-out}
+  @keyframes ping{0%{r:4px}35%{r:10px;stroke-width:1}100%{r:4px}}
+  .figname{font:600 21px/1.2 var(--serif);text-align:center;margin-top:10px}
+  .figmeta{font-size:12px;color:var(--dim);text-align:center;margin-top:3px}
+  .figstamp{margin-top:12px}
+  .leaders{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:0}
+  .leaders path{fill:none;stroke:#4a6d91;stroke-width:1.3;opacity:.8}
+  .leaders path.draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .9s ease-out forwards}
+  .fgroup{border:1px solid var(--rule);border-radius:6px;background:var(--panel)}
+  .fgroup > header{display:flex;align-items:baseline;gap:8px;padding:9px 12px;border-bottom:1px solid var(--rule)}
+  .fgroup > header b{font-size:13px}
+  .fgroup > header span{margin-left:auto;font-size:11.5px;color:var(--dimmer)}
+  .fgroup .emptyg{padding:10px 12px;font-size:12px;color:var(--dimmer)}
+  .fact{padding:9px 12px 10px;border-bottom:1px solid var(--rule);border-left:3px solid transparent;position:relative;cursor:pointer;transition:background .15s}
+  .fact:last-child{border-bottom:0;border-radius:0 0 6px 6px}
+  .fact:hover{background:var(--panel2)}
+  .fact .fl{font-size:11.5px;color:var(--dim);padding-right:120px}
+  .fact .fv{font-size:14.5px;line-height:1.35;margin:1px 0 4px;word-break:break-word}
+  .fact .fm{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--dimmer)}
+  .tag{font-size:10.5px;padding:0 7px;border-radius:9px;border:1px solid var(--rule2);color:var(--dim);white-space:nowrap}
+  .tag.inferred{border-color:#3d5a78;color:var(--lead)}
+  .tag.ai{border-color:#5b4d78;color:#a898c8}
+  .tag.you{border-color:#335c46;color:var(--linked)}
+  .fact .why{display:none;margin-top:8px;font-size:12.5px;color:#c9cac6;line-height:1.45}
+  .fact .why .ex{display:block;margin-top:6px;padding-left:9px;border-left:2px solid var(--rule2);font-size:12px;color:var(--dim)}
+  .fact .why a{font-size:12px}
+  .fact.open .why{display:block;animation:fade .2s ease}
+  .fact .vote{position:absolute;right:8px;top:7px;display:flex;gap:4px;opacity:0;transition:opacity .15s}
+  .fact:hover .vote,.fact:focus-within .vote,.fact.open .vote{opacity:1}
+  @media (hover:none){.fact .vote{opacity:1}}
+  .vote button{background:var(--ink);border:1px solid var(--rule2);border-radius:4px;padding:2px 9px;font-size:12px;cursor:pointer;color:var(--dim)}
+  .vote button.yes:hover,.vote button.yes:focus-visible{color:var(--linked);border-color:var(--linked)}
+  .vote button.no:hover,.vote button.no:focus-visible{color:var(--excluded);border-color:var(--excluded)}
+  .fact.confirmed{border-left-color:var(--linked)}
+  .fact.confirmed .fl::after{content:"  ·  confirmed by you";color:var(--linked)}
+  .fact.enter{animation:factin .55s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes factin{from{opacity:0;transform:translateX(var(--dx,-10px))}to{opacity:1;transform:none}}
+  .fact.leaving{animation:factout .32s ease-in forwards}
+  @keyframes factout{to{opacity:0;transform:translateX(var(--dx,-10px))}}
+  .fact.flash{animation:flash 1s ease-out}
+  @keyframes flash{from{background:#1c3327}to{background:transparent}}
+  .wrongs{margin-top:26px}
+  .wrongs .fact{cursor:default}.wrongs .fact .fv{text-decoration:line-through;color:var(--dim)}
+  .firstrun{border:1px dashed var(--rule2);border-radius:6px;padding:14px 16px;color:var(--dim);font-size:13px;margin-bottom:18px}
+
+  @media (max-width:1180px){
+    .pboard{grid-template-columns:minmax(0,1fr) 180px minmax(0,1fr);gap:18px}
+    .figure svg{width:150px}
+  }
+  @media (max-width:900px){
+    .pboard{grid-template-columns:1fr}
+    .figure{position:static;order:-1}
+    .figure svg{width:120px}
+    .leaders{display:none}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001s!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001s!important}
+    .edge.draw,.leaders path.draw{stroke-dashoffset:0;animation:none}
+  }
+  @media (max-width:1100px){
+    .workspace,.workspace.inspector-open{grid-template-columns:260px minmax(0,1fr)}
+    .workspace.inspector-open .inspector{position:fixed;right:0;top:0;bottom:0;width:min(380px,92vw);background:var(--ink);z-index:20;box-shadow:-8px 0 24px rgba(0,0,0,.45)}
+  }
+  @media (max-width:800px){
+    .app{height:auto;min-height:100vh}
+    main{display:block}
+    .workspace,.workspace.inspector-open{display:flex;flex-direction:column}
+    .activity{border-right:0;border-bottom:1px solid var(--rule);max-height:220px}
+    .findings{grid-template-columns:1fr}
+    .metrics{grid-template-columns:repeat(5,minmax(0,1fr))}
+    .metric{padding:6px 10px}.metric b{font-size:16px}
+    .casetitle{max-width:80vw}.stage{max-width:90vw}
+    .toolbar{margin-left:0;width:100%;flex-wrap:wrap}
+    .viewport{padding:16px 14px 24px}
+    .subject{flex-direction:column;gap:6px}.subject-name{font-size:26px}
+    .frow{grid-template-columns:1fr}.frow label.k{border-right:0;border-bottom:1px solid var(--rule);padding:8px 12px}
+    .topbar{padding:0 12px}.brand span,.prov{display:none}
+    .composer{flex-direction:column;align-items:stretch;padding:8px 12px}
+    .step{grid-template-columns:30px minmax(0,1fr)}.step .res{grid-column:1/-1;border-top:1px solid var(--rule)}
+    .tl{margin-left:78px}.tle time{left:-80px;width:70px}
+  }
+  @media print{
+    body{background:#fff;color:#111;font-size:11pt}
+    .topbar,.casebar .toolbar,.metrics,.activity,.inspector,.composer,.tabs,.banner,.ask form{display:none!important}
+    .app,.workspace,.views,.viewport{display:block!important;height:auto!important;overflow:visible!important}
+    .view{display:none!important}#view-profile{display:block!important}
+    .col,.tablewrap,.note{border-color:#999;background:#fff}
+    .subject-name,.casetitle{color:#000}
+    a{color:#000}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><b>SNOOP</b><span>case workbench</span></div>
+    <div class="topmeta">
+      <div class="prov" id="providerStatus"></div>
+      <select class="case-select" id="caseSelect" aria-label="Open a saved case"><option value="">Open case…</option></select>
+      <button class="tbtn" id="btnNew" type="button">New case</button>
+    </div>
+  </header>
+
+  <div class="casebar" id="casebar" hidden>
+    <div class="caseid"><span class="caseno" id="caseNo">—</span><span class="casetitle" id="caseTitle">—</span></div>
+    <div class="statusline"><span class="flag" id="runFlag">Ready</span><span class="stage" id="stageTxt"></span></div>
+    <div class="toolbar">
+      <span class="stats" id="caseStats"></span>
+      <button class="tbtn" id="btnPause" type="button" hidden>Pause</button>
+      <button class="tbtn" id="btnStop" type="button" hidden>Stop</button>
+      <button class="tbtn primary big" id="btnAgent" type="button" title="Let SNOOP continue: search, read, check accounts, and ask you when it is stuck">Keep investigating</button>
+    </div>
+  </div>
+
+  <main>
+    <section class="intake" id="hero">
+      <div class="intake-inner">
+        <h1>Open a case</h1>
+        <p class="lede">Public sources only. Every finding keeps its source.</p>
+        <form id="startForm" autocomplete="off">
+          <div class="form">
+            <div class="frow"><label class="k" for="startTarget">Subject</label>
+              <div class="v"><input type="text" id="startTarget" placeholder="Full name, username or domain" autofocus></div></div>
+            <div class="frow"><label class="k" for="startContext">Known context</label>
+              <div class="v"><input type="text" id="startContext" placeholder="e.g. Berlin, security researcher (comma separated)"></div></div>
+            <div class="frow"><span class="k" style="padding:12px 14px;color:var(--dim);font-size:12.5px;border-right:1px solid var(--rule);background:var(--panel2)">Depth</span>
+              <div class="v">
+                <div class="seg" id="presetOpts" role="group" aria-label="Depth">
+                  <button type="button" data-preset="quick">Quick</button>
+                  <button type="button" data-preset="standard" class="on">Standard</button>
+                  <button type="button" data-preset="deep">Deep</button>
+                  <button type="button" data-mode="accounts">Accounts only</button>
+                </div>
+              </div></div>
+            <div class="frow"><span class="k" style="padding:12px 14px;color:var(--dim);font-size:12.5px;border-right:1px solid var(--rule);background:var(--panel2)">Options</span>
+              <div class="v">
+                <label class="check"><input type="checkbox" id="exactName"> Exact full name</label>
+                <label class="check"><input type="checkbox" id="guidedMode" checked> Ask me questions</label>
+              </div></div>
+          </div>
+          <div class="submit"><button class="tbtn primary" id="startButton" type="submit">Open case</button></div>
+        </form>
+        <div class="recent" id="recent"></div>
+      </div>
+    </section>
+
+    <section class="workspace" id="workspace" hidden>
+      <aside class="pane activity">
+        <div class="panehead">What SNOOP is doing</div>
+        <div class="log" id="feedList" aria-live="polite"></div>
+        <span id="actCount" hidden></span>
+      </aside>
+
+      <section class="views">
+        <nav class="tabs" id="tabs">
+          <button class="tab on" data-view="profile">Profile</button>
+          <button class="tab" data-view="accounts">Accounts<span class="n" id="n-accounts"></span></button>
+          <button class="tab" data-view="exhibits">Evidence<span class="n" id="n-exhibits"></span></button>
+          <button class="tab" data-view="sources">Sources<span class="n" id="n-sources"></span></button>
+          <button class="tab" data-view="more">More</button>
+        </nav>
+        <div class="banner" id="banner" hidden></div>
+        <div class="viewport" id="viewport">
+          <div class="view on" id="view-profile"></div>
+          <div class="view" id="view-accounts"></div>
+          <div class="view" id="view-exhibits"></div>
+          <div class="view" id="view-sources"></div>
+          <div class="view" id="view-more">
+            <div class="seg subnav" id="moreNav" role="tablist">
+              <button type="button" data-sub="chart" class="on">Link chart</button>
+              <button type="button" data-sub="timeline">Timeline</button>
+              <button type="button" data-sub="worklog">Agent log</button>
+            </div>
+            <div class="sub on" id="view-chart"></div>
+            <div class="sub" id="view-timeline"></div>
+            <div class="sub" id="view-worklog"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="pane inspector" id="inspector">
+        <div class="panehead">Details <button class="insp-close" id="inspClose" title="Close (Esc)" type="button">×</button></div>
+        <div class="inspbody" id="inspBody"></div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="composer" id="composer" hidden>
+    <form id="cmdform">
+      <label for="cmdtext">Ask</label>
+      <input type="text" id="cmdtext" autocomplete="off" spellcheck="false" placeholder="Ask a question or give an instruction, e.g. “check if he goes by tlindqvist”">
+    </form>
+    <div class="hints" id="hints">
+      <button type="button" data-cmd="profile --ai" id="hintAi">Find more with AI</button>
+      <button type="button" data-cmd="briefing">Summary</button>
+      <button type="button" data-cmd="export --redact">Export</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const short = u => String(u||"").replace(/^https?:\/\//,"").replace(/^www\./,"").replace(/\/$/,"");
+const domain = u => short(u).split("/")[0];
+// Display-only repair of UTF-8 text that a source page mis-declared as Latin-1.
+const clean = s => String(s ?? "").replace(/â€”/g,"—").replace(/â€“/g,"–").replace(/â€™/g,"’").replace(/â€œ/g,"“").replace(/â€\x9d|â€/g,"”").replace(/Â·/g,"·");
+const clock = () => new Date().toLocaleTimeString([], {hour12:false});
+const qs = () => presenter ? "?redact=1" : "";
+
+const presenter = new URLSearchParams(location.search).get("redact") === "1";
+const state = {
+  caseId: null, case: null, cards: [], busy: false, es: null, jobEs: null,
+  counters: {queries:0, sources:0, accounts:0, evidence:0, leads:0},
+  agentLive: [], caseList: [], seenFacts: new Set(), aiReady: false, seenNodes: new Set(), seenExhibits: new Set(), lastStamp: "", logCount: 0,
+};
+
+/* ---------------- activity log ---------------- */
+function feedLine(code, text, tail, tone){
+  const list = $("#feedList");
+  const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+  const row = document.createElement("div");
+  row.className = `lg new t-${tone || String(code).toLowerCase()}`;
+  const full = clean(text) + (tail ? ` — ${clean(tail)}` : "");
+  row.innerHTML = `<time>${clock().slice(0, 5)}</time><span class="code">${esc(code)}</span>` +
+    `<span class="tx" title="${esc(full)}">${esc(clean(text))}${tail ? ` <i>${esc(clean(tail))}</i>` : ""}</span>`;
+  list.append(row);
+  while (list.children.length > 400) list.firstElementChild.remove();
+  state.logCount += 1;
+  if (nearBottom) list.scrollTop = list.scrollHeight;
+}
+function setStage(text){ $("#stageTxt").textContent = clean(text || ""); }
+const STATUS_WORDS = {running:["Investigating…", "running"], needs_input:["Needs your help", "waiting"], paused:["Paused", "waiting"],
+  done:["Finished", "done"], cancelled:["Stopped", "stopped"], stopped:["Stopped", "stopped"], failed:["Something went wrong", "stopped"],
+  ready:["Ready", ""]};
+function setFlag(status){
+  const [label, cls] = STATUS_WORDS[status] || [String(status || "Ready").replace("_", " "), ""];
+  const flag = $("#runFlag");
+  flag.textContent = label; flag.className = "flag " + cls;
+}
+function bump(key){ state.counters[key] += 1; renderCounters(true); }
+function renderCounters(flash){
+  const c = state.counters;
+  const facts = state.case?.profile_view?.counts?.total ?? 0;
+  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  const text = `${plural(facts, "fact")} · ${plural(c.accounts, "account")} · ${plural(c.sources, "page")} read`;
+  const el = $("#caseStats");
+  if (el.textContent !== text){
+    el.textContent = text;
+    if (flash){ el.classList.add("tick"); setTimeout(() => el.classList.remove("tick"), 80); }
+  }
+}
+const ENGINE = {google: "Google", brave: "Brave"};
+const BLOCK = {blocked: "the site blocks automated readers", rate_limited: "rate-limited", unavailable: "did not load"};
+function friendlyTool(tool, args){
+  args = args || {};
+  const t = args.query ? `“${args.query}”` : args.url ? domain(args.url) : args.handle ? "@" + args.handle : args.domain || args.ref || "";
+  const verbs = {search: "Search for", read_page: "Read", read_document: "Read a document on", check_profile: "Check the profile on",
+    check_username: "Check the username", follow_links: "Follow links from", archive: "Look up archive history of",
+    domain: "Look up the domain", run_planned: "Continue with the next planned step", inspect: "Re-check", compare: "Compare",
+    connections: "Look for links between findings", note: "Write down a hypothesis", ask_user: "Ask you for help", finish: "Wrap up"};
+  return `${verbs[tool] || tool} ${t}`.trim();
+}
+
+/* ---------------- events ---------------- */
+function handleEvent(kind, p){
+  p = p || {};
+  if (kind === "stage") setStage(p.name);
+  else if (kind === "query") { bump("queries"); feedLine("SEARCH", `Searching for “${p.query || ""}”`, ENGINE[p.engine] || "", "search"); }
+  else if (kind === "result") feedLine("RESULTS", p.count ? `${p.count} result${p.count === 1 ? "" : "s"} came back` : "No results", "", "search");
+  else if (kind === "source") {
+    if (p.outcome === "found"){ bump("sources"); feedLine("READ", `Read ${domain(p.url)}`, p.title, "read"); }
+    else if (p.outcome !== "not_found") feedLine("BLOCKED", `Couldn’t open ${domain(p.url)}`, BLOCK[p.outcome] || p.outcome, "blocked");
+  }
+  else if (kind === "document") { bump("sources"); feedLine("DOC", `Read a document on ${domain(p.url)}`, "", "read"); }
+  else if (kind === "hit") { bump("accounts"); feedLine("FOUND", `Found a ${p.platform || ""} account`, short(p.url), "found"); }
+  else if (kind === "evidence") { bump("evidence"); feedLine("EXHIBIT", `Noted: ${humanClaim(p.claim).toLowerCase()}`, domain(p.source_url), "exhibit"); }
+  else if (kind === "lead") { if (p.status === "running") setStage(p.purpose); }
+  else if (kind === "plan") { if (p.leads_added) feedLine("PLAN", `Planned ${p.leads_added} next step${p.leads_added === 1 ? "" : "s"}`, "", "plan"); }
+  else if (kind === "checkpoint") feedLine("ROUND", `Round ${p.round} done`, `${p.coverage?.sources_read || 0} pages read so far`, "plan");
+  else if (kind === "question" || kind === "needs_input") {
+    if (kind === "question") feedLine("INPUT", "Needs your help", (p.question || p).text || "", "input");
+    setFlag("needs_input"); setStage(""); setBusy(false); refreshCase();
+  }
+  else if (kind === "agent_thought") {
+    const s = agentStep(p.step); s.thought = p.thought || ""; s.mode = p.mode;
+    if (p.mode && p.mode !== "deterministic" && p.thought) feedLine("THINK", p.thought, "", "agent");
+    renderWorklogLive();
+  }
+  else if (kind === "agent_tool") {
+    const s = agentStep(p.step); s.tool = p.tool; s.args = p.args || {};
+    setStage(friendlyTool(p.tool, p.args)); renderWorklogLive();
+  }
+  else if (kind === "agent_observation") {
+    const s = agentStep(p.step); s.obs = p.text || ""; s.bad = p.ok === false;
+    if (p.ok === false) feedLine("SKIP", "Skipped a step", String(p.text || "").replace(/^rejected:\s*/, ""), "warn");
+    renderWorklogLive();
+  }
+  else if (kind === "agent_done") feedLine("AGENT", p.status === "needs_input" ? "Paused to ask you something" : "Finished this round", "", "found");
+  else if (kind === "profile") feedLine("FACTS", `AI added ${p.added || 0} profile fact${p.added === 1 ? "" : "s"}`, "", "fact");
+  else if (kind === "warning") feedLine("NOTE", p.detail || "", "", "warn");
+  else if (kind === "error") feedLine("ERROR", p.detail || p.where || "Something went wrong", "", "error");
+  else if (kind === "reply") { if (p.text && !["answer", "agent", "run"].includes(p.command)) feedLine("REPLY", p.text.split("\n")[0], "", "fact"); }
+  else if (kind === "archive") feedLine("ARCHIVE", `Checked archive history of ${p.target || ""}`, `${p.captures || 0} captures`, "read");
+  else if (kind === "domain") feedLine("DOMAIN", `Looked up the domain ${p.domain || ""}`, "", "read");
+  else if (kind === "paused") { setFlag("paused"); setStage("completed work is saved"); }
+  else if (kind === "cancelled") { setFlag("cancelled"); setStage("completed work is saved"); }
+  else if (kind === "session") { if (p.id && p.id !== state.caseId) { state.caseId = p.id; refreshCase(); } }
+  else if (kind === "done") {
+    const failed = p.status === "failed";
+    feedLine(failed ? "ERROR" : "DONE", failed ? (p.reason || "Run failed") : "Finished this round", "", failed ? "error" : "found");
+    if (p.id) state.caseId = p.id;
+    state.busy = false; setBusyUI();
+    refreshCase(); loadCases();
+  }
+}
+function setBusyUI(){
+  const agent = $("#btnAgent");
+  agent.disabled = state.busy;
+  agent.textContent = state.busy ? "Investigating…" : "Keep investigating";
+  $("#btnPause").hidden = !state.busy; $("#btnStop").hidden = !state.busy;
+  const start = $("#startButton");
+  start.disabled = state.busy;
+  start.textContent = state.busy ? "Opening…" : "Open case";
+  if (state.busy) setFlag("running");
+}
+function setBusy(v){ state.busy = v; setBusyUI(); }
+
+/* ---------------- streams ---------------- */
+function streamCommand(text, caseId){
+  if (state.es) state.es.close();
+  setBusy(true);
+  const first = text.trim().split(/\s+/)[0] || "";
+  state.es = new EventSource("/api/command?text=" + encodeURIComponent(text) +
+    (caseId ? "&id=" + encodeURIComponent(caseId) : "") + (presenter ? "&redact=1" : ""));
+  state.es.onmessage = e => {
+    const {kind, payload} = JSON.parse(e.data);
+    handleEvent(kind, payload);
+    if (kind === "reply") { setBusy(false); state.es.close(); state.es = null;
+      refreshCase().then(() => maybeAttach(first)); }
+  };
+  state.es.onerror = () => {
+    if (state.es) { state.es.close(); state.es = null; }
+    feedLine("NOTE", "stream reconnecting — the saved case is unchanged", "", "warn");
+    refreshCase().then(() => { if (state.case?.workflow?.status === "running") attachJob(); else setBusy(false); });
+  };
+}
+async function maybeAttach(first){
+  if (!state.caseId) return;
+  if (["run", "continue", "agent", "answer"].includes(first) || state.case?.workflow?.status === "running"){
+    try {
+      const plan = await (await fetch("/api/plan/" + encodeURIComponent(state.caseId))).json();
+      if (plan.job?.running) attachJob();
+    } catch (e) {}
+  }
+}
+async function postStream(text){
+  setBusy(true);
+  const first = text.trim().split(/\s+/)[0] || "";
+  try {
+    const res = await fetch("/api/command" + qs(), {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text, case_id: state.caseId}),
+    });
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    for (;;){
+      const {value, done} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream: true});
+      let cut;
+      while ((cut = buffer.indexOf("\n\n")) >= 0){
+        const chunk = buffer.slice(0, cut); buffer = buffer.slice(cut + 2);
+        const line = chunk.split("\n").find(l => l.startsWith("data: "));
+        if (line){ const {kind, payload} = JSON.parse(line.slice(6)); handleEvent(kind, payload); }
+      }
+    }
+  } catch (e) {
+    feedLine("NOTE", "answer stream interrupted — the saved case is unchanged", "", "warn");
+  }
+  setBusy(false);
+  await refreshCase();
+  await maybeAttach(first);
+}
+function attachJob(){
+  if (!state.caseId) return;
+  setBusy(true);
+  if (state.jobEs) state.jobEs.close();
+  state.jobEs = new EventSource("/api/case/" + encodeURIComponent(state.caseId) + "/events?since=0" + (presenter ? "&redact=1" : ""));
+  state.jobEs.onmessage = e => {
+    const row = JSON.parse(e.data);
+    handleEvent(row.kind, row.payload);
+    if (["done","paused","cancelled","question","needs_input"].includes(row.kind) && state.jobEs){
+      state.jobEs.close(); state.jobEs = null; setBusy(false); refreshCase();
+    }
+  };
+  state.jobEs.onerror = () => { if (state.jobEs) { state.jobEs.close(); state.jobEs = null; } refreshCase(); };
+}
+
+/* ---------------- case loading ---------------- */
+async function refreshCase(){
+  if (!state.caseId) return;
+  try {
+    const [d, cards] = await Promise.all([
+      (await fetch("/api/case/" + encodeURIComponent(state.caseId) + qs())).json(),
+      (await fetch("/api/cards/" + encodeURIComponent(state.caseId) + qs())).json().catch(() => []),
+    ]);
+    if (d.error) return;
+    state.case = d; state.cards = cards || [];
+    showWorkspace();
+    renderAll();
+  } catch (e) {}
+}
+async function loadCases(){
+  try {
+    const list = await (await fetch("/api/cases" + qs())).json();
+    state.caseList = list;
+    const sel = $("#caseSelect");
+    const current = state.caseId;
+    sel.innerHTML = '<option value="">Open case…</option>' + list.map(c =>
+      `<option value="${esc(c.id)}">${esc(clean(c.target || c.id).slice(0, 36))} — ${esc(c.workflow_status || "saved")}</option>`).join("");
+    if (list.some(c => c.id === current)) sel.value = current;
+    renderRecent();
+  } catch (e) {}
+}
+function renderRecent(){
+  const list = state.caseList.slice(0, 8);
+  if (!list.length){ $("#recent").innerHTML = ""; return; }
+  $("#recent").innerHTML = `<h2>Recent cases</h2><div class="tablewrap"><table class="grid"><thead><tr>
+    <th>Subject</th><th>Status</th><th>Accounts</th><th>Pages</th><th>Updated</th></tr></thead><tbody>` +
+    list.map(c => `<tr data-open="${esc(c.id)}" tabindex="0"><td>${esc(clean(c.target || c.id))}</td>
+      <td><span class="st ${c.workflow_status === "done" ? "ok" : c.workflow_status === "needs_input" ? "warn" : ""}">${esc((c.workflow_status || "saved").replace("_", " "))}</span></td>
+      <td class="t">${esc(c.accounts ?? 0)}</td><td class="t">${esc(c.sources ?? 0)}</td>
+      <td class="t">${esc(String(c.updated || "").slice(0, 16).replace("T", " "))}</td></tr>`).join("") + `</tbody></table></div>`;
+  $$("#recent tr[data-open]").forEach(tr => {
+    const open = () => openCase(tr.dataset.open);
+    tr.addEventListener("click", open);
+    tr.addEventListener("keydown", e => { if (e.key === "Enter") open(); });
+  });
+}
+async function loadProviders(){
+  try {
+    const data = await (await fetch("/api/providers")).json();
+    const g = data.search?.engines?.find(e => e.engine === "google")?.ready;
+    const b = data.search?.engines?.find(e => e.engine === "brave")?.ready;
+    const ai = !!data.providers?.ai && data.providers.ai !== "not configured";
+    state.aiReady = ai;
+    $("#hintAi").disabled = !ai; $("#hintAi").title = ai ? "" : "Add an AI key to .env to enable";
+    $("#providerStatus").innerHTML =
+      `<i class="${g ? "on" : ""}" title="Google via SerpAPI">Google</i><i class="${b ? "on" : ""}" title="Brave Search">Brave</i>` +
+      `<i class="${ai ? "on" : ""}" title="${esc(data.providers?.ai || "no AI key")}">AI</i>`;
+    const banner = $("#banner");
+    banner.hidden = !!data.search?.any_ready;
+    banner.textContent = "Web search is not configured (SERPAPI_KEY or BRAVE_SEARCH_API_KEY). Searches stay queued; other methods continue.";
+  } catch (e) {}
+}
+function openCase(id){
+  if (!id) return;
+  state.caseId = id; state.case = null; state.agentLive = [];
+  state.seenNodes = new Set(); state.seenExhibits = new Set(); state.seenFacts = new Set(); state.lastStamp = "";
+  $("#feedList").innerHTML = ""; state.logCount = 0;
+  feedLine("OPEN", "case restored from disk", "", "plan");
+  refreshCase();
+}
+function showWorkspace(){
+  $("#hero").hidden = true;
+  $("#workspace").hidden = false;
+  $("#casebar").hidden = false; $("#composer").hidden = false;
+  document.title = "SNOOP — " + clean(state.case?.target || state.caseId || "");
+}
+
+/* ---------------- helpers ---------------- */
+function caseNumber(d){
+  const date = String(d?.created || "").replace(/\D/g, "").slice(2, 8) || "000000";
+  let h = 0; for (const ch of String(d?.id || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `SN-${date}-${(h % 0xffff).toString(16).toUpperCase().padStart(4, "0")}`;
+}
+const CLAIMS = {
+  "structured-person-assertion": "Page metadata names the person", "account-ownership": "Profile name match",
+  "user-supplied-anchor": "Analyst-supplied anchor", "analyst-transcribed-page": "Analyst transcript",
+  "archive-capture": "Archived capture", "common-crawl-capture": "Crawl index capture",
+  "domain-registration": "Domain registration", "domain-dns": "DNS record", "ct-certificates": "Certificate names",
+  "document-author-metadata": "Document author field", "mentioned-in-document": "Named in document",
+  "image-ocr-text": "Text in image",
+};
+function humanClaim(c){
+  c = String(c || "");
+  if (CLAIMS[c]) return CLAIMS[c];
+  if (c.startsWith("mentioned-in-source")) return c.includes("author") ? "Named as author" : "Mentioned on page";
+  return c.replace(/[-_]/g, " ").replace(/^./, m => m.toUpperCase()) || "Observation";
+}
+function allAccounts(d){ return d.all_accounts || [...(d.hits || []), ...(d.discarded || [])]; }
+function accountStatus(d, h){
+  const excluded = new Set((d.discarded || []).map(x => x.account_id));
+  if (excluded.has(h.account_id) || ["unrelated", "conflicting"].includes(h.verdict)) return "excluded";
+  if (["confirmed", "probable"].includes(h.verdict)) return "linked";
+  return "open";
+}
+function exhibitNo(d, id){
+  const i = (d.evidence_records || []).findIndex(r => r.id === id);
+  return i >= 0 ? `EX-${String(i + 1).padStart(3, "0")}` : id;
+}
+function citeChips(d, ids){
+  return (ids || []).map(id => `<button class="cite" data-sel="evidence:${esc(id)}">${esc(exhibitNo(d, id))}</button>`).join("");
+}
+function agentStep(n){
+  let s = state.agentLive.find(x => x.step === n);
+  if (!s){ s = {step: n, fresh: true}; state.agentLive.push(s); }
+  return s;
+}
+function argText(args){
+  return Object.entries(args || {}).filter(([k, v]) => !k.startsWith("_") && v !== "" && v != null && !(Array.isArray(v) && !v.length))
+    .map(([k, v]) => Array.isArray(v) ? v.join(", ") : String(v)).join(" · ");
+}
+const TOOL_NAMES = {search:"Search", read_page:"Read page", read_document:"Read document", check_profile:"Check profile",
+  check_username:"Check username", follow_links:"Follow links", archive:"Archive lookup", domain:"Domain lookup",
+  run_planned:"Run planned", inspect:"Inspect", compare:"Compare", connections:"Connections", note:"Note",
+  ask_user:"Ask analyst", finish:"Close run"};
+
+/* ---------------- rendering ---------------- */
+let currentView = "profile", currentSub = "chart";
+const SUBS = ["chart", "timeline", "worklog"];
+function switchView(name){
+  if (name === "summary") name = "profile";
+  if (SUBS.includes(name)){ currentSub = name; name = "more"; }
+  currentView = name;
+  $$(".tab").forEach(t => t.classList.toggle("on", t.dataset.view === name));
+  $$("#viewport > .view").forEach(v => v.classList.toggle("on", v.id === "view-" + name));
+  $$("#moreNav button").forEach(b => b.classList.toggle("on", b.dataset.sub === currentSub));
+  $$("#view-more .sub").forEach(v => v.classList.toggle("on", v.id === "view-" + currentSub));
+  if (name === "more" && currentSub === "chart") renderChart();
+  if (name === "profile") requestAnimationFrame(() => drawLeaders(false));
+}
+function renderAll(){
+  const d = state.case; if (!d) return;
+  state.counters.queries = (d.queries || []).length;
+  state.counters.sources = (d.sources || []).filter(s => s.outcome === "found").length;
+  state.counters.accounts = allAccounts(d).length;
+  state.counters.evidence = (d.evidence_records || []).length;
+  state.counters.leads = (d.leads || []).filter(l => l.status === "pending").length;
+  renderCounters(false);
+  $("#caseNo").textContent = `${caseNumber(d)} · opened ${String(d.created || "").slice(0, 10)}`;
+  $("#caseTitle").textContent = clean(d.subject_status?.name || d.target);
+  $("#n-accounts").textContent = allAccounts(d).length || "";
+  $("#n-exhibits").textContent = (d.evidence_records || []).length || "";
+  $("#n-sources").textContent = (d.sources || []).length || "";
+  const wf = d.workflow || {};
+  if (!state.busy){ setFlag(wf.status || "ready"); setStage(wf.status === "needs_input" ? "" : ""); }
+  renderProfile(); renderAccounts(); renderExhibits(); renderSources(); renderTimeline(); renderWorklog();
+  syncQuestionTimer(d);
+  if (currentView === "more" && currentSub === "chart") renderChart();
+  bindSelection();
+}
+
+/* ---- the profile: a figure of the person with every finding attached ---- */
+// Each fact group hangs off one part of the body.
+const GROUPS = [
+  {key: "identity", side: "L", part: "head", ax: 100, ay: 46},
+  {key: "work", side: "L", part: "chest", ax: 100, ay: 150},
+  {key: "online", side: "L", part: "armL", ax: 30, ay: 236},
+  {key: "skills", side: "R", part: "armR", ax: 170, ay: 236},
+  {key: "sport", side: "R", part: "legs", ax: 118, ay: 318},
+  {key: "places", side: "R", part: "feet", ax: 121, ay: 402},
+];
+const EMPTY_HINT = {identity: "Name, age, languages", work: "Job, employer, school", online: "Accounts and handles",
+  skills: "Skills and interests", sport: "Sports, rank, build", places: "City or region they state"};
+const FIGURE = `<svg viewBox="0 0 200 420" aria-hidden="true">
+  <circle class="part" data-part="head" cx="100" cy="46" r="30"/>
+  <path class="part" data-part="chest" d="M91 76 h18 v10 q30 4 34 18 l8 122 q-51 16 -102 0 l8 -122 q4 -14 34 -18 z"/>
+  <path class="part" data-part="armL" d="M57 106 q-18 8 -22 40 l-12 88 q6 8 16 2 l14 -84 q4 -16 8 -22 z"/>
+  <path class="part" data-part="armR" d="M143 106 q18 8 22 40 l12 88 q-6 8 -16 2 l-14 -84 q-4 -16 -8 -22 z"/>
+  <path class="part" data-part="legs" d="M50 232 q50 14 100 0 l-8 92 l-4 66 h-24 l-8 -120 h-4 l-8 120 h-24 l-4 -66 z"/>
+  <path class="part" data-part="feet" d="M62 392 h24 l2 14 h-30 z M114 392 h24 l4 14 h-30 z"/>
+  ${GROUPS.map(g => `<circle class="anchor" data-anchor="${g.key}" cx="${g.ax}" cy="${g.ay}" r="4"/>`).join("")}
+</svg>`;
+
+function factCard(f, side, i, firstPaint){
+  const isNew = !state.seenFacts.has(f.id);
+  const tag = f.origin === "ai" ? `<span class="tag ai">AI</span>`
+    : f.origin === "analyst" ? `<span class="tag you">you</span>`
+    : f.basis === "inferred" ? `<span class="tag inferred">inferred</span>` : "";
+  const hedge = (f.basis === "inferred" || f.origin === "ai") ? (f.confidence === "likely" ? "likely" : "possible")
+    : f.confidence === "possible" ? "unconfirmed" : "";
+  const from = (f.sources || []).slice(0, 2).join(", ");
+  const vote = f.origin === "analyst" ? "" : f.status === "confirmed"
+    ? `<div class="vote"><button type="button" data-vote="reset" data-id="${esc(f.id)}">Undo</button></div>`
+    : `<div class="vote"><button type="button" class="yes" data-vote="confirm" data-id="${esc(f.id)}">✓ Right</button>` +
+      `<button type="button" class="no" data-vote="reject" data-id="${esc(f.id)}">✗ Wrong</button></div>`;
+  const delay = isNew && firstPaint ? `animation-delay:${Math.min(i * 45, 900)}ms;` : "";
+  return `<div class="fact ${esc(f.status)} ${isNew ? "enter" : ""}" data-fid="${esc(f.id)}" tabindex="0"
+      style="--dx:${side === "L" ? "-12px" : "12px"};${delay}" aria-expanded="false">
+    <div class="fl">${esc(f.label)}</div>
+    <div class="fv">${esc(clean(f.value))}</div>
+    <div class="fm">${tag}${hedge ? `<span>${hedge}</span>` : ""}${from ? `<span>· ${esc(clean(from))}</span>` : ""}</div>
+    <div class="why">${esc(clean(f.why))}${f.excerpt ? `<span class="ex">“${esc(clean(f.excerpt))}”</span>` : ""}
+      ${f.source_url ? `<div style="margin-top:6px"><a href="${esc(f.source_url)}" target="_blank" rel="noopener noreferrer">Open the source</a></div>` : ""}</div>
+    ${vote}</div>`;
+}
+
+function renderProfile(){
+  const d = state.case, el = $("#view-profile");
+  const pv = d.profile_view || {facts: [], categories: {}, counts: {}};
+  const subj = d.subject_status || {name: d.target, status: "unverified"};
+  const live = pv.facts.filter(f => f.status !== "rejected");
+  const wrong = pv.facts.filter(f => f.status === "rejected");
+  const firstPaint = state.seenFacts.size === 0;
+  let h = "";
+
+  const q = d.pending_question?.id ? d.pending_question : null;
+  if (q){
+    const assist = q.manual_assist || q.source_url;
+    const opts = [...new Map([...(q.options || []), "I don't know", "Skip"].map(o => [o.toLowerCase(), o])).values()];
+    h += `<section class="ask">
+      <div class="head"><b>SNOOP needs your help</b><span class="qtimer" id="qTimer" aria-live="off"></span></div>
+      <p class="q">${esc(q.text)}</p>
+      ${q.source_url ? `<a class="open" href="${esc(q.source_url)}" target="_blank" rel="noopener noreferrer">Open ${esc(domain(q.source_url))} in a new tab</a>` : ""}
+      <form id="answerForm">
+        ${assist
+          ? `<textarea id="answerText" aria-label="What the page shows" placeholder="Paste what you see — name, bio, links — or a profile link / @username"></textarea>`
+          : `<input type="text" id="answerText" aria-label="Your answer" placeholder="${esc(q.hint || "Type your answer")}">`}
+        <div class="row"><button class="tbtn primary" type="submit">Send</button>
+          ${opts.map(o => `<button class="tbtn" type="button" data-answer="${esc(o)}">${esc(o)}</button>`).join("")}</div>
+      </form></section>`;
+  }
+
+  h += `<div class="pfhead"><p>Click a fact to see where it came from. Mark it <b style="color:var(--linked)">right</b> or
+      <b style="color:var(--excluded)">wrong</b> — SNOOP uses your answers to steer the search.</p>
+    <div class="right">
+      <button class="tbtn" type="button" data-cmd="profile --ai" ${state.aiReady ? "" : `disabled title="Add an AI key to .env to enable"`}>Find more with AI</button>
+      <button class="tbtn" type="button" id="printBtn">Print</button></div></div>`;
+  if (live.length <= 1 && state.busy)
+    h += `<div class="firstrun">Looking for public information about <b>${esc(clean(subj.name || d.target))}</b>. Facts appear on the figure as they are found.</div>`;
+
+  const byCat = key => live.filter(f => f.category === key);
+  const group = (g, idx) => {
+    const facts = byCat(g.key);
+    return `<section class="fgroup" data-group="${g.key}"><header><b>${esc(pv.categories[g.key] || g.key)}</b><span>${facts.length || ""}</span></header>` +
+      (facts.length ? facts.map((f, i) => factCard(f, g.side, idx * 3 + i, firstPaint)).join("")
+        : `<div class="emptyg">${EMPTY_HINT[g.key]} — nothing found yet</div>`) + `</section>`;
+  };
+  const stamp = subj.status === "supported" ? "SUPPORTED" : "UNVERIFIED";
+  const c = pv.counts || {};
+  h += `<div class="pboard" id="pboard"><svg class="leaders" id="leaders"></svg>
+    <div class="pcol">${GROUPS.filter(g => g.side === "L").map(group).join("")}</div>
+    <div class="figure">${FIGURE}
+      <div class="figname">${esc(clean(subj.name || d.target))}</div>
+      <div class="figmeta">${c.total || 0} facts · ${c.confirmed || 0} confirmed by you${c.inferred ? ` · ${c.inferred} inferred` : ""}</div>
+      <div class="stamp figstamp ${subj.status === "supported" ? "supported" : "unverified"}" title="${esc(subj.detail || "")}">${stamp}</div>
+    </div>
+    <div class="pcol">${GROUPS.filter(g => g.side === "R").map(group).join("")}</div></div>`;
+  if (wrong.length)
+    h += `<details class="wrongs"><summary class="faint" style="cursor:pointer;font-size:12.5px">Marked wrong (${wrong.length})</summary>
+      <div class="fgroup" style="margin-top:8px">${wrong.map(f => `<div class="fact rejected" data-fid="${esc(f.id)}">
+        <div class="fl">${esc(f.label)}${f.note ? ` · ${esc(f.note)}` : ""}</div><div class="fv">${esc(clean(f.value))}</div>
+        <div class="vote" style="opacity:1"><button type="button" data-vote="reset" data-id="${esc(f.id)}">Undo</button></div></div>`).join("")}</div></details>`;
+  el.innerHTML = h;
+
+  // Figure: light the body parts that have facts; ping anchors that gained new facts.
+  const newGroups = new Set();
+  for (const g of GROUPS){
+    const facts = byCat(g.key);
+    if (!facts.length) continue;
+    el.querySelector(`.part[data-part="${g.part}"]`)?.classList.add("lit");
+    el.querySelector(`[data-anchor="${g.key}"]`)?.classList.add("on");
+    if (facts.some(f => !state.seenFacts.has(f.id))) newGroups.add(g.key);
+  }
+  if (!firstPaint) newGroups.forEach(k => el.querySelector(`[data-anchor="${k}"]`)?.classList.add("ping"));
+  live.forEach(f => state.seenFacts.add(f.id));
+  wrong.forEach(f => state.seenFacts.add(f.id));
+
+  // interactions
+  el.querySelectorAll(".fact[data-fid]").forEach(card => {
+    const toggle = () => { card.classList.toggle("open"); card.setAttribute("aria-expanded", card.classList.contains("open")); requestAnimationFrame(() => drawLeaders(false)); };
+    card.addEventListener("click", e => { if (!e.target.closest("button,a")) toggle(); });
+    card.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target === card){ e.preventDefault(); toggle(); } });
+  });
+  el.querySelectorAll("[data-vote]").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation();
+    voteFact(btn.dataset.id, btn.dataset.vote, btn.closest(".fact"));
+  }));
+  el.querySelectorAll("[data-cmd]").forEach(b => b.addEventListener("click", () => send(b.dataset.cmd)));
+  el.querySelector("#printBtn")?.addEventListener("click", () => window.print());
+  el.querySelectorAll("[data-answer]").forEach(btn => btn.addEventListener("click", () => sendAnswer(btn.dataset.answer)));
+  const form = el.querySelector("#answerForm");
+  if (form){
+    form.addEventListener("submit", e => { e.preventDefault(); sendAnswer(el.querySelector("#answerText").value); });
+    const box = el.querySelector("textarea#answerText");
+    if (box) box.addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)){ e.preventDefault(); sendAnswer(box.value); } });
+  }
+  requestAnimationFrame(() => drawLeaders(newGroups.size > 0 || firstPaint, newGroups, firstPaint));
+}
+
+function drawLeaders(animate, fresh = new Set(), all = false){
+  const board = $("#pboard"), svg = $("#leaders");
+  if (!board || !svg || currentView !== "profile" || getComputedStyle(svg).display === "none") return;
+  const b = board.getBoundingClientRect();
+  svg.setAttribute("width", b.width); svg.setAttribute("height", b.height);
+  let paths = "";
+  for (const g of GROUPS){
+    const box = board.querySelector(`[data-group="${g.key}"]`);
+    const dot = board.querySelector(`[data-anchor="${g.key}"]`);
+    if (!box || !dot || !dot.classList.contains("on")) continue;
+    const r = box.getBoundingClientRect(), a = dot.getBoundingClientRect();
+    const x1 = (g.side === "L" ? r.right : r.left) - b.left, y1 = r.top - b.top + 18;
+    const x2 = a.left + a.width / 2 - b.left, y2 = a.top + a.height / 2 - b.top;
+    const mx = (x1 + x2) / 2;
+    const draw = animate && (all || fresh.has(g.key));
+    paths += `<path class="${draw ? "draw" : ""}" pathLength="1" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`;
+  }
+  svg.innerHTML = paths;
+}
+
+function voteFact(id, verdict, card){
+  if (!id || state.busy) return;
+  if (card){
+    if (verdict === "reject") card.classList.add("leaving");
+    else if (verdict === "confirm") card.classList.add("flash");
+  }
+  postStream(`fact ${id} ${verdict}`);
+}
+
+/* ---- accounts: linked / open / ruled out ---- */
+function renderAccounts(){
+  const d = state.case, el = $("#view-accounts");
+  const groups = {linked: [], open: [], excluded: []};
+  for (const a of allAccounts(d)) groups[accountStatus(d, a)].push(a);
+  const col = (key, title, why) => `<div class="col ${key}"><header><b>${title}</b><span class="faint" style="font-size:11.5px">${why}</span><span class="n">${groups[key].length}</span></header>` +
+    (groups[key].length ? groups[key].map(a => `<div class="acct" data-sel="account:${esc(a.ref)}">
+      <span class="ref">${esc(a.ref)}</span><span class="p">${esc(a.platform || "")}${a.display_name ? ` · ${esc(clean(a.display_name))}` : ""}</span>
+      <span class="u">${key === "excluded" && a.name_eligibility === "different" ? "different name — a namesake" : esc(short(a.canonical_url || a.url))}</span></div>`).join("")
+      : `<div class="none">None</div>`) + `</div>`;
+  let h = `<p class="faint" style="margin:0 0 14px;font-size:12.5px">Finding an account is not proof it belongs to this person. Click one to see why it was sorted here.</p>
+    <div class="findings">${col("linked", "Probably theirs", "evidence supports it")}${col("open", "Maybe theirs", "not enough yet")}${col("excluded", "Not theirs", "ruled out")}</div>`;
+  const rejected = d.analysis?.rejected_matches || [];
+  if (rejected.length) h += `<details class="more" style="margin-top:18px"><summary>People with similar names that were set aside (${rejected.length})</summary><div class="tablewrap"><table class="grid"><tbody>` +
+    rejected.slice(0, 20).map(r => `<tr><td><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(clean(r.title || short(r.url)))}</a></td><td class="faint">${esc(r.reason)}</td></tr>`).join("") + `</tbody></table></div></details>`;
+  const b = d.briefing;
+  if (b) h += `<details class="more" style="margin-top:8px"><summary>How much searching was done</summary><div class="cov" style="margin-top:8px">` +
+    (b.resources || []).filter(r => r.limit).map(r => `<span>${esc(r.name.replaceAll("_", " ").replace(/^./, m => m.toUpperCase()))}</span>
+      <div class="bar"><i style="width:${Math.min(100, Math.round(100 * r.used / r.limit))}%"></i></div>
+      <span class="mono faint" style="font-size:11.5px">${r.used} / ${r.limit}</span>`).join("") + `</div></details>`;
+  el.innerHTML = h;
+}
+/* Unanswered questions are skipped after the configured timeout so the
+   investigation keeps going. Typing in the answer box pauses the countdown. */
+const TIMEOUT_REPLY = "no reply (timed out)";
+function syncQuestionTimer(d){
+  const q = d?.pending_question?.id ? d.pending_question : null;
+  const limit = Number(d?.question_timeout || 0);
+  if (!q || !limit){ stopQuestionTimer(); return; }
+  if (state.qTimer?.id === q.id){ tickQuestionTimer(); return; }
+  stopQuestionTimer();
+  state.qTimer = {id: q.id, caseId: d.id, left: limit, handle: setInterval(tickQuestionTimer, 1000)};
+  tickQuestionTimer();
+}
+function stopQuestionTimer(){
+  if (state.qTimer?.handle) clearInterval(state.qTimer.handle);
+  state.qTimer = null;
+}
+function tickQuestionTimer(){
+  const t = state.qTimer; if (!t) return;
+  const box = document.getElementById("answerText");
+  const typing = box && (box.value.trim() || document.activeElement === box);
+  const label = document.getElementById("qTimer");
+  if (typing){ if (label) label.textContent = "timer paused while you type"; return; }
+  if (!state.busy) t.left -= 1;
+  if (label) label.textContent = t.left > 0 ? `auto-skips in ${t.left}s` : "skipping…";
+  if (t.left <= 0 && !state.busy && state.case?.id === t.caseId){
+    const id = t.id; stopQuestionTimer();
+    if (state.case?.pending_question?.id !== id) return;
+    feedLine("ANSWER", "No reply — question skipped", "the investigation continues", "input");
+    postStream("answer " + JSON.stringify(TIMEOUT_REPLY));
+  }
+}
+function sendAnswer(value){
+  if (!value || !value.trim() || state.busy) return;
+  feedLine("ANSWER", "You answered", value.trim().split("\n")[0].slice(0, 90), "input");
+  postStream("answer " + JSON.stringify(value.trim()));
+}
+
+/* exhibits register */
+let exhibitFilter = "";
+function renderExhibits(){
+  const d = state.case, el = $("#view-exhibits");
+  const rows = (d.evidence_records || []).map((r, i) => ({r, no: `EX-${String(i + 1).padStart(3, "0")}`}));
+  if (!rows.length){ el.innerHTML = `<div class="empty">No exhibits yet. Exhibits are recorded when a read source says something specific.</div>`; return; }
+  const f = exhibitFilter.toLowerCase();
+  const shown = rows.filter(({r, no}) => !f || [no, r.claim, r.excerpt, r.source_url, r.extraction_method].join(" ").toLowerCase().includes(f));
+  const fresh = new Set(rows.filter(({r}) => state.seenExhibits.size && !state.seenExhibits.has(r.id)).map(({r}) => r.id));
+  rows.forEach(({r}) => state.seenExhibits.add(r.id));
+  el.innerHTML = `<div class="filters"><input id="exFilter" type="search" placeholder="Filter exhibits" value="${esc(exhibitFilter)}" aria-label="Filter exhibits">
+    <span class="faint" style="font-size:12px">${shown.length} of ${rows.length}</span></div>
+    <div class="tablewrap"><table class="grid"><thead><tr><th>No.</th><th>Finding</th><th>Excerpt</th><th>Source</th><th>Kind</th><th>Captured</th></tr></thead><tbody>` +
+    shown.map(({r, no}) => `<tr data-sel="evidence:${esc(r.id)}" class="${fresh.has(r.id) ? "fresh" : ""}"><td class="id">${no}</td>
+      <td>${esc(humanClaim(r.claim))}</td><td class="clip faint">${esc(clean(String(r.excerpt || r.value || "").slice(0, 160)))}</td>
+      <td class="url">${esc(domain(r.source_url))}</td>
+      <td><span class="kindtag ${r.kind === "user_statement" ? "analyst" : ""}">${r.kind === "user_statement" ? "analyst" : r.supports ? "supports" : "clue"}</span></td>
+      <td class="t">${esc(String(r.retrieved_at || "").slice(0, 10))}</td></tr>`).join("") + `</tbody></table></div>`;
+  const input = $("#exFilter");
+  input.addEventListener("input", () => { exhibitFilter = input.value; renderExhibits(); bindSelection(); const x = $("#exFilter"); x.focus(); x.setSelectionRange(x.value.length, x.value.length); });
+}
+
+/* sources */
+function renderSources(){
+  const d = state.case, el = $("#view-sources");
+  const sources = d.sources || [];
+  if (!sources.length){ el.innerHTML = `<div class="empty">No pages read yet.</div>`; return; }
+  const label = s => s.outcome === "found" ? ["read", "ok"] : ["blocked", "rate_limited", "unavailable"].includes(s.outcome) ? ["not readable", "warn"] : [s.outcome.replace("_", " "), ""];
+  el.innerHTML = `<div class="tablewrap"><table class="grid"><thead><tr><th>Status</th><th>Title</th><th>Domain</th><th>Found via</th><th>Retrieved</th></tr></thead><tbody>` +
+    sources.map(s => { const [t, c] = label(s); return `<tr data-sel="source:${esc(s.id)}"><td><span class="st ${c}">${esc(t)}</span>${s.extra?.transcribed ? ` <span class="kindtag analyst">transcribed</span>` : ""}</td>
+      <td class="clip">${esc(clean(s.title || short(s.url)))}</td><td class="url">${esc(domain(s.url))}</td>
+      <td class="t">${esc(s.via || "")}</td><td class="t">${esc(String(s.retrieved_at || "").slice(0, 16).replace("T", " "))}</td></tr>`; }).join("") +
+    `</tbody></table></div>`;
+}
+
+/* timeline */
+function renderTimeline(){
+  const d = state.case, el = $("#view-timeline");
+  const events = [];
+  for (const h of d.hits || []){
+    if (h.joined) events.push({t: h.joined, what: `${h.platform} account ${h.ref} created`, src: h.canonical_url});
+    for (const ev of h.enrichment?.events || []) if (ev.event_time) events.push({t: ev.event_time, what: ev.event, src: ev.source_url});
+  }
+  for (const r of d.evidence_records || []) if (r.source_event_time) events.push({t: r.source_event_time, what: humanClaim(r.claim), src: r.source_url, id: r.id});
+  events.sort((a, b) => String(a.t).localeCompare(String(b.t)));
+  if (!events.length){ el.innerHTML = `<div class="empty">No dated events yet. Publication dates, join dates and archive captures appear here.</div>`; return; }
+  el.innerHTML = `<div class="tl">` + events.map(e => `<div class="tle" ${e.id ? `data-sel="evidence:${esc(e.id)}"` : ""}>
+    <time>${esc(String(e.t).slice(0, 10))}</time><div class="w">${esc(clean(e.what))}</div><div class="s">${esc(domain(e.src))}</div></div>`).join("") + `</div>`;
+}
+
+/* work log */
+const LEAD_NAMES = {web_search:"Search", read_source:"Read page", crawl_site:"Read site", check_account:"Check profile",
+  probe_handles:"Check username", expand_links:"Follow links", read_document:"Read document", archive_lookup:"Archive lookup",
+  domain_lookup:"Domain lookup", image_clues:"Image text", model_analysis:"Review"};
+function stepAction(s){
+  if (s.tool === "run_planned" && (s.args?.ran || []).length){
+    const [type, ...rest] = String(s.args.ran[0]).split(": ");
+    return [LEAD_NAMES[type] || type, rest.join(": ")];
+  }
+  if (s.tool === "run_planned") return ["Planned action", ""];
+  if (s.tool === "ask_user") return [TOOL_NAMES.ask_user, short(s.args?.url || "")];
+  return [TOOL_NAMES[s.tool] || s.tool || "—", argText(s.args)];
+}
+function stepRow(s, live){
+  const bad = s.bad || s.valid === false;
+  const out = s.obs ?? s.observation;
+  const [action, target] = stepAction(s);
+  return `<div class="step ${bad ? "rejected" : ""} ${live ? "live" : ""} ${s.fresh ? "enter" : ""}" data-step>
+    <div class="no">${esc(s.step)}</div>
+    <div class="act"><b>${esc(action)}</b><span>${esc(clean(target))}</span></div>
+    <div class="res">${s.thought ? `<span class="why">${esc(clean(s.thought))}</span>` : ""}
+      <span class="out">${out === undefined ? "running…" : esc(clean(bad ? "Refused: " + String(out).replace(/^rejected(?: by the engine)?:\s*/, "") : out))}</span></div></div>`;
+}
+function renderWorklog(){
+  const d = state.case, el = $("#view-worklog");
+  const ag = d.workflow?.agent || {};
+  let h = "";
+  if (state.busy && state.agentLive.length){
+    h += `<section class="block"><div class="runhead"><b style="color:var(--lead)">Agent running</b></div><div class="steps" id="liveSteps">` +
+      state.agentLive.map(s => stepRow(s, true)).join("") + `</div></section>`;
+    state.agentLive.forEach(s => s.fresh = false);
+  }
+  const runs = ag.runs || [];
+  runs.slice().reverse().forEach((run, i) => {
+    if (!(run.steps || []).length) return;
+    h += `<section class="block"><div class="runhead"><b>Agent run ${runs.length - i}</b>
+      <span>${run.mode === "deterministic" ? "planner autopilot (no AI key)" : "AI-assisted · " + esc(run.mode)}</span>
+      ${run.goal ? `<span>· goal: ${esc(run.goal)}</span>` : ""}<span>· ${esc(String(run.status || "").replace("_", " "))}</span>
+      <span class="faint">· ${esc(String(run.at || "").slice(0, 16).replace("T", " "))}</span></div>
+      <div class="steps">${run.steps.map(s => stepRow({...s, fresh: false}, false)).join("")}</div>
+      ${(ag.hypotheses || []).length && i === 0 ? `<details class="more"><summary>Hypotheses (${ag.hypotheses.length}) — AI inference</summary>${ag.hypotheses.map(x => `<div class="quote">${esc(x.text)}<div>${citeChips(d, x.evidence_ids)}</div></div>`).join("")}</details>` : ""}
+    </section>`;
+  });
+  const queued = (d.leads || []).filter(l => l.status === "pending").sort((a, b) => b.score - a.score).slice(0, 12);
+  h += `<section class="block"><div class="bh"><h2>Queue</h2><span class="faint">${(d.leads || []).filter(l => l.status === "pending").length} planned action(s), highest priority first</span></div>` +
+    (queued.length ? `<div class="tablewrap"><table class="grid"><thead><tr><th>Priority</th><th>Action</th><th>Why</th><th>Origin</th></tr></thead><tbody>` +
+      queued.map(l => `<tr><td class="t">${Number(l.score || 0).toFixed(1)}</td><td>${esc(l.type.replaceAll("_", " "))}</td>
+        <td class="clip">${esc(clean(l.purpose))}</td><td class="t">${esc(l.origin)}</td></tr>`).join("") + `</tbody></table></div>`
+      : `<div class="empty" style="padding:18px">Nothing queued.</div>`) + `</section>`;
+  if (!runs.length && !state.agentLive.length)
+    h = `<p class="faint" style="margin:0 0 16px;font-size:12.5px">No agent runs yet. <a href="#" data-cmd="agent">Start the agent</a> to hand this case to it — each step is logged here.</p>` + h;
+  el.innerHTML = h;
+  el.querySelectorAll("[data-step]").forEach(row => row.addEventListener("click", () => row.classList.toggle("expanded")));
+  el.querySelectorAll("a[data-cmd]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); send(a.dataset.cmd); }));
+}
+function renderWorklogLive(){
+  if (state.case) renderWorklog();
+  const flagged = state.agentLive.length;
+}
+
+/* link chart */
+function renderChart(){
+  const d = state.case, el = $("#view-chart");
+  if (!d) return;
+  const accounts = allAccounts(d);
+  const order = {linked: 0, open: 1, excluded: 2};
+  const ranked = accounts.map(a => ({a, st: accountStatus(d, a)})).sort((x, y) => order[x.st] - order[y.st]);
+  const excludedAll = ranked.filter(x => x.st === "excluded");
+  // Many ruled-out accounts collapse into one group node instead of crowding the chart.
+  const grouped = excludedAll.length > 3;
+  const accs = (grouped ? ranked.filter(x => x.st !== "excluded") : ranked).slice(0, 22);
+  if (grouped) accs.push({a: {account_id: "excluded-group", ref: "", platform: `${excludedAll.length} excluded`}, st: "excluded", group: true});
+  const mentionSources = new Set((d.evidence_records || []).filter(r => r.supports && r.dependence?.startsWith("src_")).map(r => r.dependence));
+  const conns = d.connections || [];
+  const ledSources = new Set(conns.filter(c => c.kind === "led_to").map(c => c.a));
+  const srcs = (d.sources || []).filter(s => mentionSources.has(s.id) || ledSources.has(s.id) || s.extra?.exact_name_result)
+    .slice(0, 14);
+  if (!accs.length && !srcs.length){ el.innerHTML = `<div class="empty">The chart fills in as pages mentioning the subject and accounts are found.</div>`; return; }
+
+  const W = Math.max(860, (el.clientWidth || $("#viewport").clientWidth - 44));
+  const rowH = 62;
+  const rightCols = accs.length > 11 ? 2 : 1;
+  const perCol = Math.ceil(accs.length / rightCols) || 1;
+  const H = Math.max(440, 90 + Math.max(srcs.length, perCol) * rowH);
+  const cx = Math.round(W * 0.42), cy = Math.round(H / 2);
+  const pos = new Map();
+  pos.set("subject", {x: cx, y: cy});
+  srcs.forEach((s, i) => pos.set(s.id, {x: Math.round(Math.min(280, W * 0.22)), y: Math.round(H / 2 + (i - (srcs.length - 1) / 2) * rowH)}));
+  accs.forEach(({a}, i) => {
+    const colIndex = Math.floor(i / perCol), row = i % perCol;
+    const n = Math.min(perCol, accs.length - colIndex * perCol);
+    pos.set(a.account_id, {x: rightCols === 2 ? Math.round(W * (0.7 + colIndex * 0.19)) : Math.round(W * 0.78), y: Math.round(H / 2 + (row - (n - 1) / 2) * rowH)});
+  });
+
+  const edges = [];
+  for (const {a, st} of accs) edges.push({from: "subject", to: a.account_id, cls: st});
+  for (const s of srcs) if (mentionSources.has(s.id)) edges.push({from: s.id, to: "subject", cls: "mentions", label: "mentions"});
+  const byRef = new Map(accounts.map(a => [a.ref, a]));
+  const idOf = ref => String(ref).startsWith("src_") ? ref : byRef.get(ref)?.account_id;
+  const LABELS = {links_to: "links to", shared_site: "same site", same_handle: "same handle", same_image_url: "same image", led_to: "led to"};
+  const CLUES = new Set(["same_handle", "same_image_url"]);
+  for (const c of conns){
+    const f = idOf(c.a), t = idOf(c.b);
+    if (!f || !t || !pos.has(f) || !pos.has(t) || c.excluded_side) continue;
+    edges.push({from: f, to: t, cls: c.kind, label: CLUES.has(c.kind) ? "" : (LABELS[c.kind] || c.kind), arc: true});
+  }
+
+  const firstDraw = state.seenNodes.size === 0;
+  const isNew = id => !state.seenNodes.has(id);
+  const curve = (p, q, arc) => {
+    // Same column: loop out on the left, away from the labels on the right.
+    if (Math.abs(p.x - q.x) < 40){ const bx = Math.min(p.x, q.x) - 46 - Math.abs(p.y - q.y) * 0.12; return `M${p.x - 17},${p.y} C${bx},${p.y} ${bx},${q.y} ${q.x - 17},${q.y}`; }
+    if (arc){ const lift = Math.min(p.y, q.y) - 70 - Math.abs(p.x - q.x) * 0.08; return `M${p.x},${p.y} Q${(p.x + q.x) / 2},${lift} ${q.x},${q.y}`; }
+    const mx = (p.x + q.x) / 2; return `M${p.x},${p.y} C${mx},${p.y} ${mx},${q.y} ${q.x},${q.y}`;
+  };
+  const labelAt = (p, q, arc) => Math.abs(p.x - q.x) < 40
+    ? {x: Math.min(p.x, q.x) - 50 - Math.abs(p.y - q.y) * 0.09, y: (p.y + q.y) / 2 + 3}
+    : arc
+    ? {x: (p.x + q.x) / 2, y: (Math.min(p.y, q.y) + (Math.min(p.y, q.y) - 70 - Math.abs(p.x - q.x) * 0.08)) / 2 - 2}
+    : {x: p.x + (q.x - p.x) * 0.5, y: p.y + (q.y - p.y) * 0.5 - 5};
+  let svg = `<svg id="chartSvg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Link chart">`;
+  svg += `<rect class="bgfade" x="0" y="0" width="${W}" height="${H}"/>`;
+  let labels = "";
+  edges.forEach((e, i) => {
+    const p = pos.get(e.from), q = pos.get(e.to);
+    if (!p || !q) return;
+    const fresh = isNew(e.from + ">" + e.to);
+    const drawable = !["open", "excluded", "shared_site", "same_handle", "same_image_url"].includes(e.cls);
+    // pathLength only on drawn (solid) edges: it would rescale dash patterns to solid lines.
+    svg += `<path class="edge ${esc(e.cls)} ${fresh && drawable ? "draw" : ""}" data-a="${esc(e.from)}" data-b="${esc(e.to)}" ${drawable ? `pathLength="1"` : ""}
+      style="${fresh ? `animation-delay:${firstDraw ? Math.min(i * 30, 500) : 0}ms` : ""}" d="${curve(p, q, e.arc)}"/>`;
+    if (e.label){ const l = labelAt(p, q, e.arc);
+      labels += `<text class="elabel" data-a="${esc(e.from)}" data-b="${esc(e.to)}" x="${l.x}" y="${l.y}" text-anchor="middle">${esc(e.label)}</text>`; }
+  });
+  svg += labels;
+  // The SVG translate lives on the outer group; the CSS entry animation runs on
+  // an inner group so its transform cannot override the position.
+  const node = (id, cls, sel, inner, i) => `<g class="node ${cls}" data-id="${esc(id)}" data-sel="${esc(sel)}"
+    transform="translate(${pos.get(id).x},${pos.get(id).y})"><g class="${isNew(id) ? "enter" : ""}"
+    style="${isNew(id) ? `animation-delay:${firstDraw ? Math.min(i * 35, 500) : 0}ms;` : ""}">${inner}</g></g>`;
+  srcs.forEach((s, i) => {
+    const blocked = s.outcome !== "found";
+    svg += node(s.id, `source ${blocked ? "blocked" : ""}`, `source:${s.id}`,
+      `<path class="shape" d="M-11,-15 h15 l7,7 v23 h-22 z"/><path class="glyph" d="M4,-15 v7 h7" fill="none" stroke="var(--rule2)"/>
+       <rect class="glyph" x="-6" y="-3" width="11" height="1.6"/><rect class="glyph" x="-6" y="2" width="11" height="1.6"/><rect class="glyph" x="-6" y="7" width="7" height="1.6"/>
+       <text class="nm" x="-22" y="-1" text-anchor="end">${esc(clean((s.title || domain(s.url))).slice(0, 30))}</text>
+       <text class="sub" x="-22" y="13" text-anchor="end">${esc(domain(s.url))}${blocked ? " · not readable" : ""}</text>`, i);
+  });
+  accs.forEach(({a, st, group}, i) => {
+    if (group){
+      svg += node(a.account_id, "account excluded group", "", `<rect class="shape" x="-17" y="-17" width="34" height="34" rx="3"/>
+        <rect class="shape" x="-13" y="-21" width="34" height="34" rx="3" style="fill:none"/>
+        <text x="0" y="4.5" text-anchor="middle" style="font:600 12px var(--mono);fill:var(--paper)">${excludedAll.length}</text>
+        <text class="nm" x="30" y="-2">Excluded accounts</text><text class="sub" x="30" y="12">ruled out · see Summary</text>`, i + srcs.length);
+      return;
+    }
+    const initials = (String(a.platform || "?").match(/[A-Z0-9]/g) || [String(a.platform || "?")[0]]).slice(0, 2).join("").toUpperCase();
+    svg += node(a.account_id, `account ${st}`, `account:${a.ref}`,
+      `<rect class="shape" x="-17" y="-17" width="34" height="34" rx="3"/>
+       <text x="0" y="4.5" text-anchor="middle" style="font:600 12px var(--mono);fill:var(--paper)">${esc(initials)}</text>
+       <text class="nm" x="26" y="-2">${esc(a.platform || "")} <tspan class="sub">${esc(a.ref)}</tspan></text>
+       <text class="sub" x="26" y="12">${esc((a.matched_handle ? "@" + a.matched_handle : short(a.canonical_url)).slice(0, 30))}</text>`, i + srcs.length);
+  });
+  const subj = d.subject_status || {};
+  svg += node("subject", "subject", "", `<circle class="shape" r="30"/>
+    <circle class="glyph" cx="0" cy="-8" r="8"/><path class="glyph" d="M-15,17 a15,12 0 0 1 30,0 z"/>
+    <text class="nm" x="0" y="52" text-anchor="middle">${esc(clean(subj.name || d.target))}</text>
+    <text class="sub" x="0" y="67" text-anchor="middle">subject · ${esc(subj.status === "supported" ? "supported" : "unverified")}</text>`, 0);
+  svg += `</svg>`;
+
+  const legendLine = (cls, text) => `<span><svg width="26" height="8"><path class="edge ${cls}" d="M1,4 H25"/></svg>${text}</span>`;
+  el.innerHTML = `<div class="chartbar"><span>${accs.length} account(s) · ${srcs.length} page(s) · ${edges.length} link(s)</span>
+    <div class="legend">${legendLine("linked", "linked")}${legendLine("open", "open")}${legendLine("excluded", "excluded")}
+      ${legendLine("mentions", "page mentions subject")}${legendLine("links_to", "published link")}${legendLine("same_handle", "clue only")}</div></div>
+    <div class="chart">${svg}</div>`;
+
+  for (const e of edges) state.seenNodes.add(e.from + ">" + e.to);
+  for (const id of pos.keys()) state.seenNodes.add(id);
+  const svgEl = $("#chartSvg");
+  svgEl.querySelectorAll(".node").forEach(n => {
+    n.addEventListener("mouseenter", () => {
+      const id = n.dataset.id;
+      svgEl.classList.add("focus");
+      n.classList.add("hl");
+      svgEl.querySelectorAll(`[data-a="${CSS.escape(id)}"],[data-b="${CSS.escape(id)}"]`).forEach(x => {
+        x.classList.add("hl");
+        const other = x.dataset.a === id ? x.dataset.b : x.dataset.a;
+        svgEl.querySelector(`.node[data-id="${CSS.escape(other)}"]`)?.classList.add("hl");
+      });
+    });
+    n.addEventListener("mouseleave", () => { svgEl.classList.remove("focus"); svgEl.querySelectorAll(".hl").forEach(x => x.classList.remove("hl")); });
+  });
+  svgEl.querySelector(".node.group")?.addEventListener("click", () => switchView("accounts"));
+  bindSelection();
+}
+
+/* ---------------- inspector ---------------- */
+function props(rows){ return `<dl class="props">${rows.filter(Boolean).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl>`; }
+function inspect(kind, id){
+  const d = state.case; if (!d || !kind || !id) return;
+  $("#workspace").classList.add("inspector-open");
+  let html = "";
+  if (kind === "account"){
+    const h = allAccounts(d).find(x => x.ref === id || x.account_id === id);
+    if (h){
+      const st = accountStatus(d, h);
+      const recs = (d.evidence_records || []).filter(r => r.account_id === h.account_id);
+      html = `<h3 class="insp-title">${esc(h.platform || "")} · ${esc(h.ref)}</h3>` + props([
+        ["Status", `<span class="st ${st === "linked" ? "ok" : st === "open" ? "warn" : "bad"}">${st}</span>`],
+        ["Profile", `<a href="${esc(h.canonical_url || h.url)}" target="_blank" rel="noopener">${esc(short(h.canonical_url || h.url))}</a>`],
+        h.display_name && ["Display name", esc(clean(h.display_name))],
+        ["Handle", esc(h.matched_handle || "—")],
+        ["Found via", esc(h.discovery_source || "—")],
+        ["Verdict", esc(h.verdict || "unresolved")],
+      ]);
+      if (h.bio) html += `<div class="quote">${esc(clean(h.bio))}<small>profile bio (first-party)</small></div>`;
+      html += recs.slice(0, 8).map(r => `<div class="quote">${esc(clean(r.excerpt || r.claim || ""))}<small>${esc(exhibitNo(d, r.id))} · ${esc(r.extraction_method || "")} · ${esc(String(r.retrieved_at || "").slice(0, 10))}</small></div>`).join("");
+      html += `<div class="acts">${["evidence", "verify", "follow", "deepen", "keep", "discard"].map(c => `<button class="tbtn" type="button" onclick="send('${c} ${esc(h.ref)}')">${c[0].toUpperCase() + c.slice(1)}</button>`).join("")}</div>`;
+    }
+  } else if (kind === "source"){
+    const s = (d.sources || []).find(x => x.id === id);
+    if (s){
+      html = `<h3 class="insp-title">${esc(clean(s.title || short(s.url)))}</h3>` + props([
+        ["URL", `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(short(s.url))}</a>`],
+        ["Outcome", esc(s.outcome === "found" ? "read" : s.outcome)],
+        ["Found via", esc(s.via || "—")], ["Type", esc(s.content_type || "—")],
+        ["Retrieved", esc(String(s.retrieved_at || "").slice(0, 16).replace("T", " "))],
+      ]);
+      if (s.extra?.snippet_only) html += `<div class="quote">${esc(clean(s.extra.snippet || s.extra.search_title || ""))}<small>search snippet — unverified lead, not evidence</small></div>`;
+      if (s.excerpt) html += `<div class="quote">${esc(clean(s.excerpt))}<small>page excerpt</small></div>`;
+      html += `<div class="acts"><button class="tbtn" type="button" onclick="send('read ${esc(s.url)}')">Re-read</button>
+        <button class="tbtn" type="button" onclick="send('archive ${esc(s.url)}')">Archive history</button></div>`;
+    }
+  } else if (kind === "evidence"){
+    const r = (d.evidence_records || []).find(x => x.id === id);
+    if (r){
+      html = `<h3 class="insp-title">${esc(exhibitNo(d, r.id))} · ${esc(humanClaim(r.claim))}</h3>` + props([
+        ["Source", `<a href="${esc(r.source_url)}" target="_blank" rel="noopener">${esc(short(r.source_url))}</a>`],
+        ["Method", esc(r.extraction_method || "—")],
+        ["Kind", esc(r.kind === "user_statement" ? "analyst statement" : r.supports ? "supports" : "clue")],
+        ["Captured", esc(String(r.retrieved_at || "").slice(0, 16).replace("T", " "))],
+        r.source_event_time && ["Event date", esc(r.source_event_time)],
+        ["Record", `<span class="mono">${esc(r.id)}</span>`],
+      ]) + `<div class="quote">${esc(clean(r.excerpt || String(r.value ?? "")))}</div>` +
+        (r.limitation ? `<p class="faint" style="font-size:12px">${esc(r.limitation)}</p>` : "");
+    }
+  }
+  $("#inspBody").innerHTML = html || `<div class="empty">Not found in this case.</div>`;
+  if (html){ $("#inspBody").insertAdjacentHTML("beforeend", `<div id="traceBox"></div>`); loadTrace(id); }
+}
+async function loadTrace(ref){
+  const box = $("#traceBox");
+  if (!box || !state.caseId) return;
+  try {
+    const r = await (await fetch(`/api/case/${encodeURIComponent(state.caseId)}/trace?ref=${encodeURIComponent(ref)}` + (presenter ? "&redact=1" : ""))).json();
+    if (!r.steps || !r.steps.length){ box.innerHTML = `<div class="trace-h">How this was found</div><div class="faint" style="font-size:12px">${esc(r.note || "No recorded path.")}</div>`; return; }
+    box.innerHTML = `<div class="trace-h">How this was found</div><ol class="trace">` + r.steps.map(s =>
+      `<li><b>${esc(s.type.replaceAll("_", " "))}</b> <span class="faint">· ${esc(s.origin)}</span>
+        <code>${esc(s.query ? s.query : short(s.url))}${s.results != null ? ` — ${s.results} result(s)` : ""}</code></li>`).join("") +
+      `<li class="end"><b>${esc(clean(r.item.label))}</b></li></ol>`;
+  } catch (e) { box.innerHTML = ""; }
+}
+function bindSelection(){
+  $$("[data-sel]").forEach(el => {
+    if (el._bound || !el.dataset.sel) return;
+    el._bound = true;
+    if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
+    const activate = () => {
+      $$(".selected").forEach(x => x.classList.remove("selected"));
+      el.classList.add("selected");
+      const [kind, ...rest] = el.dataset.sel.split(":");
+      inspect(kind, rest.join(":"));
+    };
+    el.addEventListener("click", activate);
+    el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); activate(); } });
+  });
+}
+window.send = function(text){
+  if (!text || state.busy) return;
+  if (/^agent\b/i.test(text.trim())){ state.agentLive = []; state._switchedToLog = false; }
+  feedLine("CMD", text, "", "plan");
+  streamCommand(text, state.caseId);
+};
+
+function showLaunchWorkspace(target){
+  $("#hero").hidden = true; $("#workspace").hidden = false;
+  $("#casebar").hidden = false; $("#composer").hidden = false;
+  $("#caseNo").textContent = "new case";
+  $("#caseTitle").textContent = target;
+  $("#view-profile").innerHTML = `<div class="empty launch">Looking for public information about <b>${esc(target)}</b>. Facts appear here as they are found.</div>`;
+  switchView("profile");
+  feedLine("OPEN", `case opened: ${target}`, "", "plan");
+}
+
+/* ---------------- wiring ---------------- */
+$("#startForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const target = $("#startTarget").value.trim();
+  if (!target || state.busy) return;
+  const on = $("#presetOpts button.on");
+  const preset = on?.dataset.preset || "standard";
+  const mode = on?.dataset.mode === "accounts" ? "accounts" : "full";
+  const context = $("#startContext").value.split(",").map(s => s.trim()).filter(Boolean);
+  $("#feedList").innerHTML = ""; state.logCount = 0;
+  state.caseId = null; state.case = null; state.agentLive = [];
+  state.seenNodes = new Set(); state.seenExhibits = new Set(); state.seenFacts = new Set(); state.lastStamp = "";
+  Object.keys(state.counters).forEach(k => state.counters[k] = 0);
+  renderCounters(false);
+  showLaunchWorkspace(target);
+  setBusy(true);
+  const q = new URLSearchParams({target, mode, preset});
+  q.set("exact_name", $("#exactName").checked ? "1" : "0");
+  q.set("guided", $("#guidedMode").checked ? "1" : "0");
+  if (presenter) q.set("redact", "1");
+  context.forEach(c => q.append("context", c));
+  if (state.es) state.es.close();
+  state.es = new EventSource("/api/investigate?" + q);
+  state.es.onmessage = ev => {
+    const {kind, payload} = JSON.parse(ev.data);
+    handleEvent(kind, payload);
+    if (["done", "cancelled"].includes(kind) && state.es){ state.es.close(); state.es = null; }
+  };
+  state.es.onerror = () => { feedLine("ERROR", "stream dropped — reopen the case to continue", "", "error"); setBusy(false);
+    if (state.es){ state.es.close(); state.es = null; } };
+});
+$("#presetOpts").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  $$("#presetOpts button").forEach(x => x.classList.remove("on")); b.classList.add("on");
+});
+$("#tabs").addEventListener("click", e => { const t = e.target.closest(".tab"); if (t) switchView(t.dataset.view); });
+$("#cmdform").addEventListener("submit", e => {
+  e.preventDefault();
+  const input = $("#cmdtext"); const t = input.value.trim();
+  if (t){ send(t); input.value = ""; }
+});
+$("#hints").addEventListener("click", e => { const b = e.target.closest("button[data-cmd]"); if (b) send(b.dataset.cmd); });
+$("#caseSelect").addEventListener("change", e => openCase(e.target.value));
+$("#btnNew").addEventListener("click", () => {
+  $("#workspace").hidden = true; $("#casebar").hidden = true; $("#composer").hidden = true;
+  $("#hero").hidden = false; $("#caseSelect").value = ""; loadCases(); $("#startTarget").focus();
+});
+$("#inspClose").addEventListener("click", () => $("#workspace").classList.remove("inspector-open"));
+$("#btnAgent").addEventListener("click", () => send("agent"));
+$("#btnPause").addEventListener("click", () => control("pause"));
+$("#btnStop").addEventListener("click", () => control("stop"));
+$("#moreNav").addEventListener("click", e => { const b = e.target.closest("button[data-sub]"); if (b) switchView(b.dataset.sub); });
+async function control(action){
+  if (!state.caseId) return;
+  try {
+    const res = await fetch("/api/case/" + encodeURIComponent(state.caseId) + "/control", {
+      method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({action})});
+    const data = await res.json();
+    feedLine(action === "stop" ? "STOP" : "PAUSE", data.message || action, "", "warn");
+    if (action === "stop"){ setBusy(false); refreshCase(); }
+  } catch (e) {}
+}
+const VIEWS = ["profile", "accounts", "exhibits", "sources", "more"];
+document.addEventListener("keydown", e => {
+  const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName);
+  if (e.key === "/" && !typing){ e.preventDefault(); $("#cmdtext").focus(); }
+  if (!typing && e.key >= "1" && e.key <= "5" && state.case) switchView(VIEWS[+e.key - 1]);
+  if (e.key === "Escape") $("#workspace").classList.remove("inspector-open");
+});
+let resizeTimer;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (currentView === "more" && currentSub === "chart") renderChart(); drawLeaders(false); }, 150); });
+
+/* boot */
+loadProviders(); loadCases();
+const initial = new URLSearchParams(location.search).get("case");
+if (initial) openCase(initial);
+const initialView = new URLSearchParams(location.search).get("view");
+if (initialView && (VIEWS.includes(initialView) || SUBS.includes(initialView))) switchView(initialView);
+</script>
+</body>
+</html>

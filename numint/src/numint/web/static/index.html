@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Numint: Phone Number Intelligence</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141416;
+    --surface-2: #1a1a1d;
+    --border: #26262b;
+    --border-strong: #35353c;
+    --text: #e7e7ea;
+    --muted: #8a8a93;
+    --faint: #5c5c64;
+    --link: #8fb3d4;
+    --good: #6bbf8f;
+    --warn: #cba24e;
+    --bad: #d46a6a;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.55; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 2px; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 44px 22px 96px; }
+
+  /* header */
+  header.top { display: flex; align-items: baseline; gap: 12px; padding-bottom: 18px;
+    border-bottom: 1px solid var(--border); }
+  .brand { font-family: var(--mono); font-weight: 600; font-size: 17px; letter-spacing: -0.01em; }
+  .brand .dim { color: var(--faint); }
+  .tag { color: var(--muted); font-size: 13px; }
+  .ver { margin-left: auto; color: var(--faint); font-family: var(--mono); font-size: 12px; }
+
+  /* search */
+  .searchbar { display: flex; gap: 8px; flex-wrap: wrap; }
+  .searchbar input[type=text] { flex: 1 1 300px; min-width: 180px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 12px 14px; font-size: 15px; font-family: var(--mono);
+    outline: none; }
+  .searchbar input[type=text]:focus { border-color: var(--border-strong); }
+  select { font-family: var(--mono); font-size: 13px; }
+  select, button { border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); padding: 12px 14px; cursor: pointer; }
+  button.primary { background: var(--text); color: var(--bg); font-weight: 600;
+    border-color: var(--text); font-family: var(--sans); padding: 12px 24px; }
+  button.primary:hover { background: #fff; }
+  button.primary:disabled { opacity: .5; cursor: default; }
+  .ask-row { margin-top: 8px; }
+  .ask-row input { width: 100%; background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px; padding: 11px 14px; font-size: 14px; }
+  .opts { display: flex; gap: 18px; flex-wrap: wrap; margin: 12px 2px 0;
+    font-size: 12.5px; color: var(--muted); }
+  .opts label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .opts input { accent-color: var(--muted); }
+
+  /* cards */
+  .cards { display: grid; gap: 1px; margin-top: 30px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .cards:empty { display: none; }
+  .card { background: var(--bg); padding: 20px 22px; }
+  .card h3 { margin: 0 0 14px; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .12em; color: var(--faint); font-weight: 600; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+  .grid2 > .card { background: var(--bg); }
+  @media (max-width: 640px){ .grid2 { grid-template-columns: 1fr; } }
+
+  /* summary line */
+  .summary { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; }
+  .iso { font-family: var(--mono); font-size: 12px; color: var(--muted);
+    border: 1px solid var(--border-strong); border-radius: 4px; padding: 3px 7px; }
+  .summary .num { font-family: var(--mono); font-size: 24px; font-weight: 600;
+    letter-spacing: -.01em; }
+  .chip { font-family: var(--mono); font-size: 12px; color: var(--muted);
+    padding: 3px 0; }
+  .chip.sep::before { content: "·"; color: var(--faint); margin-right: 14px; }
+  .stat { font-family: var(--mono); font-size: 12.5px; font-weight: 600; }
+  .stat.good { color: var(--good); } .stat.bad { color: var(--bad); } .stat.warn { color: var(--warn); }
+  .stat.muted { color: var(--muted); }
+
+  /* key-value */
+  .kv { display: grid; grid-template-columns: 130px 1fr; gap: 9px 16px; font-size: 13.5px; }
+  .kv .k { color: var(--muted); }
+  .kv .v { font-family: var(--mono); word-break: break-word; }
+  .kv .v .src { color: var(--faint); font-size: 11px; margin-left: 8px; font-family: var(--mono); }
+  .kv .v.conflict { color: var(--warn); }
+
+  /* confidence */
+  .conf { margin-top: 4px; }
+  .conf-row { display: grid; grid-template-columns: 90px 1fr auto; align-items: center;
+    gap: 10px; font-size: 12px; color: var(--muted); margin: 5px 0; }
+  .conf-row .lbl { font-family: var(--mono); }
+  .bar { height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
+  .bar > span { display: block; height: 100%; background: var(--muted); }
+  .bar > span.full { background: var(--good); }
+  .conf-row .cnt { font-family: var(--mono); font-size: 11px; }
+
+  /* presence */
+  .pres-row { display: grid; grid-template-columns: 140px 110px 1fr; align-items: center;
+    gap: 10px; padding: 8px 0; font-size: 13.5px; border-bottom: 1px solid var(--surface-2); }
+  .pres-row:last-child { border-bottom: none; }
+  .pres-row .psite { font-family: var(--mono); }
+  .pres-row .pleak { font-family: var(--mono); color: var(--text); word-break: break-word; }
+  .pres-row .pleak .src { color: var(--faint); }
+  .card h3 .stat { margin-left: 8px; text-transform: none; letter-spacing: 0; }
+  @media (max-width: 640px){ .pres-row { grid-template-columns: 1fr auto; }
+    .pres-row .pleak { grid-column: 1 / -1; } }
+
+  /* advanced (collapsible) */
+  details.advanced { margin-top: 14px; border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden; }
+  details.advanced > summary { cursor: pointer; list-style: none; padding: 12px 16px;
+    font-size: 12px; color: var(--muted); font-family: var(--mono); user-select: none; }
+  details.advanced > summary::-webkit-details-marker { display: none; }
+  details.advanced > summary::before { content: "+ "; color: var(--faint); }
+  details.advanced[open] > summary::before { content: "- "; }
+  details.advanced > summary:hover { color: var(--text); }
+  details.advanced .cards { margin-top: 0; border: none; border-radius: 0;
+    border-top: 1px solid var(--border); }
+
+  /* open lookup sites */
+  .site-note { color: var(--faint); font-size: 12px; margin: 0 0 12px; }
+  .site-links { margin-top: 14px; }
+
+  /* footprint */
+  .fp-group { margin-bottom: 16px; } .fp-group:last-child { margin-bottom: 0; }
+  .fp-group .cat { color: var(--muted); font-size: 11px; text-transform: uppercase;
+    letter-spacing: .08em; margin-bottom: 7px; }
+  .fp-group a { display: inline-block; margin: 0 14px 6px 0; font-size: 13px;
+    font-family: var(--mono); }
+
+  /* providers */
+  .prov { display: grid; grid-template-columns: 12px 140px auto 1fr; align-items: center;
+    gap: 10px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--surface-2); }
+  .prov:last-child { border-bottom: none; }
+  .mark { font-family: var(--mono); font-size: 12px; text-align: center; }
+  .mark.ran { color: var(--good); } .mark.skipped { color: var(--faint); } .mark.error { color: var(--bad); }
+  .prov .pname { font-family: var(--mono); }
+  .prov .pstat { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .prov .pdetail { color: var(--faint); font-size: 11.5px; font-family: var(--mono); text-align: right; }
+
+  /* ai */
+  .ai .meta { font-size: 11px; color: var(--faint); font-family: var(--mono); margin-bottom: 10px; }
+  .ai .lbl { color: var(--muted); font-weight: 600; margin-top: 14px; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .08em; }
+  .ai p { margin: 4px 0 0; font-size: 13.5px; }
+
+  /* actions */
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .actions button { font-size: 12.5px; padding: 8px 14px; font-family: var(--mono); }
+  .actions button:hover { border-color: var(--border-strong); }
+
+  .error-box { color: var(--bad); border: 1px solid var(--border-strong);
+    padding: 12px 14px; border-radius: 6px; margin-top: 20px; font-family: var(--mono); font-size: 13px; }
+  .note { color: var(--muted); font-size: 13px; }
+
+  .spinner { width: 12px; height: 12px; border: 2px solid rgba(0,0,0,.25);
+    border-top-color: var(--bg); border-radius: 50%; animation: spin .7s linear infinite;
+    display: inline-block; vertical-align: -2px; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  footer { margin-top: 40px; color: var(--faint); font-size: 12px; font-family: var(--mono); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="brand">numint<span class="dim">()</span></span>
+    <span class="tag">phone number intelligence</span>
+    <span class="ver" id="ver"></span>
+  </header>
+
+  <div class="searchbar">
+    <input id="number" type="text" placeholder="+1 415 555 0123"
+      autocomplete="off" spellcheck="false" />
+    <select id="country" title="Default region for national numbers">
+      <option value="">auto</option>
+    </select>
+    <button id="scanBtn" class="primary">Scan</button>
+  </div>
+  <div class="ask-row">
+    <input id="ask" type="text" placeholder='ask a question (optional), e.g. "is this a real mobile or VoIP?"' />
+  </div>
+  <div class="opts">
+    <label title="Find where this number is registered online. Use only on numbers you are allowed to check.">
+      <input type="checkbox" id="presence" checked /> find accounts</label>
+    <label title="Send the result to your Discord channel.">
+      <input type="checkbox" id="discord" /> send to Discord</label>
+    <label><input type="checkbox" id="noCache" /> fresh (skip cache)</label>
+    <label><input type="checkbox" id="noAi" /> no AI</label>
+  </div>
+
+  <div id="results" class="cards"></div>
+
+  <details id="advWrap" class="advanced" hidden>
+    <summary>Advanced details</summary>
+    <div id="advanced" class="cards"></div>
+  </details>
+
+  <div id="errbox"></div>
+
+  <footer>numint</footer>
+</div>
+
+<script>
+const COUNTRIES = ["US","GB","CA","AU","DE","FR","IN","BR","NG","ZA","JP","CN","RU","MX","ES","IT","NL","SE","AE","SG"];
+const csel = document.getElementById("country");
+COUNTRIES.forEach(c => { const o=document.createElement("option"); o.value=c; o.textContent=c; csel.appendChild(o); });
+
+const el = id => document.getElementById(id);
+const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function riskClass(s){ s=Number(s); if(isNaN(s))return"muted"; if(s>=75)return"bad"; if(s>=40)return"warn"; return"good"; }
+function distinct(arr){ return [...new Set((arr||[]).map(a=>a.value).filter(v=>v!=null&&v!==""))]; }
+function attrList(arr){
+  if(!arr||!arr.length) return '<span class="src">unknown</span>';
+  const conflict = distinct(arr).length > 1;
+  const html = arr.map(a=>`${esc(a.value)}<span class="src">${esc(a.source)}</span>`).join("<br/>");
+  return conflict ? `<span class="v conflict">${html}</span>` : html;
+}
+
+let lastProfile = null;
+
+fetch("/api/health").then(r=>r.json()).then(d=>{ if(d.version) el("ver").textContent = "v"+d.version; }).catch(()=>{});
+
+async function scan(){
+  const number = el("number").value.trim();
+  if(!number){ el("number").focus(); return; }
+  const btn = el("scanBtn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Scanning';
+  el("errbox").innerHTML = ""; el("results").innerHTML = "";
+  el("advanced").innerHTML = ""; el("advWrap").hidden = true;
+  try {
+    const resp = await fetch("/api/scan", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        number, country: el("country").value || null,
+        no_cache: el("noCache").checked, no_footprint: false,
+        no_ai: el("noAi").checked, presence: el("presence").checked,
+        discord: el("discord").checked,
+        ask: el("ask").value.trim() || null
+      })
+    });
+    if(!resp.ok){ const e = await resp.json().catch(()=>({detail:"Request failed"}));
+      throw new Error(e.detail || "Request failed"); }
+    lastProfile = await resp.json();
+    render(lastProfile);
+  } catch(err){
+    el("errbox").innerHTML = `<div class="error-box">${esc(err.message)}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = "Scan";
+  }
+}
+
+function render(p){
+  const n = p.input;
+  const carrier = (p.carriers[0] && p.carriers[0].value) || n.carrier || "unknown";
+  const validStat = n.is_valid
+    ? '<span class="stat good">valid</span>'
+    : '<span class="stat bad">invalid</span>';
+  let riskStat = "";
+  if(p.risk && p.risk.fraud_score){ const s=p.risk.fraud_score.value;
+    riskStat = `<span class="chip sep">risk <span class="stat ${riskClass(s)}">${esc(s)}/100</span></span>`; }
+
+  // Headline (the wow): number, verdict badges, risk, accounts found, confidence.
+  const wow = [];
+  wow.push(`<div class="card"><div class="summary">
+    <span class="iso">${esc(n.country_iso||"??")}</span>
+    <span class="num">${esc(n.e164)}</span>
+    ${validStat}
+    <span class="chip sep">${esc((n.type||"unknown").replace(/_/g," "))}</span>
+    <span class="chip sep">${esc(carrier)}</span>
+    ${riskStat}
+  </div></div>`);
+
+  const pres = presenceCard(p); if(pres) wow.push(pres);
+  const risk = riskCard(p, true); if(risk) wow.push(risk);
+  const ai = aiCard(p); if(ai) wow.push(ai);
+  const conf = confidenceCard(p); if(conf) wow.push(conf);
+  const sites = sitesCard(p); if(sites) wow.push(sites);
+  el("results").innerHTML = wow.join("");
+
+  // Everything else lives behind "Advanced details" so the headline stays clean.
+  const adv = [];
+  adv.push(`<div class="grid2">
+    <div class="card"><h3>Validity &amp; Format</h3><div class="kv">
+      <div class="k">E.164</div><div class="v">${esc(n.e164)}</div>
+      <div class="k">International</div><div class="v">${esc(n.international)}</div>
+      <div class="k">National</div><div class="v">${esc(n.national)}</div>
+      <div class="k">RFC3966</div><div class="v">${esc(n.rfc3966)}</div>
+      <div class="k">Possible</div><div class="v">${n.is_possible?"yes":"no"}</div>
+      <div class="k">Valid</div><div class="v">${n.is_valid?"yes":"no"}</div>
+    </div></div>
+    <div class="card"><h3>Carrier &amp; Line Type</h3><div class="kv">
+      <div class="k">Carrier</div><div class="v">${attrList(p.carriers)}</div>
+      <div class="k">Line type</div><div class="v">${attrList(p.line_types)}</div>
+    </div></div>
+  </div>`);
+  adv.push(`<div class="card"><h3>Location &amp; Timezone</h3><div class="kv">
+      <div class="k">Location</div><div class="v">${attrList(p.locations)}</div>
+      <div class="k">Region</div><div class="v">${esc(n.region||"unknown")}</div>
+      <div class="k">Timezones</div><div class="v">${esc((n.timezones||[]).join(", ")||"unknown")}</div>
+  </div></div>`);
+  const fp = footprintCard(p); if(fp) adv.push(fp);
+  adv.push(providerCard(p));
+  adv.push(`<div class="card"><h3>Export</h3><div class="actions">
+    <button onclick="dlJSON()">Download JSON</button>
+    <button onclick="copyJSON()">Copy JSON</button>
+    <button onclick="dlMarkdown()">Markdown report</button>
+  </div></div>`);
+  el("advanced").innerHTML = adv.join("");
+  el("advWrap").hidden = false;
+}
+
+function riskCard(p){
+  const r = p.risk || {};
+  const rows = [];
+  const bool = (a, badTrue=true) => { if(!a) return null;
+    const v = a.value; const cls = (typeof v==="boolean") ? ((badTrue?v:!v)?"bad":"good") : "muted";
+    return `<span class="stat ${cls}">${typeof v==="boolean"?(v?"yes":"no"):esc(v)}</span><span class="src">${esc(a.source)}</span>`; };
+  if(r.fraud_score){ const s=r.fraud_score.value;
+    rows.push(["Fraud score", `<span class="stat ${riskClass(s)}">${esc(s)}/100</span><span class="src">${esc(r.fraud_score.source)}</span>`]); }
+  const add=(lbl,a,bt=true)=>{ const b=bool(a,bt); if(b) rows.push([lbl,b]); };
+  add("Spam", r.spam); add("Disposable", r.disposable); add("VoIP", r.voip);
+  add("Recent abuse", r.recent_abuse); add("Active", r.active, false);
+  if(!rows.length) return null;  // nothing to show without a risk provider
+  return `<div class="card"><h3>Risk &amp; Reputation</h3><div class="kv">
+    ${rows.map(([k,v])=>`<div class="k">${k}</div><div class="v">${v}</div>`).join("")}
+  </div></div>`;
+}
+
+function confidenceCard(p){
+  const c = p.confidence || {};
+  const keys = Object.keys(c).filter(k => c[k] && Object.keys(c[k]).length);
+  if(!keys.length) return null;
+  const rows = keys.map(k=>{
+    const counts = c[k];
+    const total = Object.values(counts).reduce((a,b)=>a+b,0);
+    const top = Math.max(...Object.values(counts));
+    const agree = top === total && Object.keys(counts).length === 1;
+    const pct = total ? Math.round(top/total*100) : 0;
+    return `<div class="conf-row">
+      <span class="lbl">${esc(k)}</span>
+      <span class="bar"><span class="${agree?'full':''}" style="width:${pct}%"></span></span>
+      <span class="cnt">${top}/${total} agree</span>
+    </div>`;
+  }).join("");
+  return `<div class="card"><h3>Confidence</h3><div class="conf">${rows}</div></div>`;
+}
+
+function presenceCard(p){
+  const list = p.presence || [];
+  if(!list.length) return null;
+  const mark = { yes:'<span class="stat good">registered</span>',
+    no:'<span class="stat muted">not found</span>',
+    rate_limited:'<span class="stat warn">rate limited</span>',
+    error:'<span class="stat bad">error</span>',
+    unknown:'<span class="stat muted">unknown</span>' };
+  const order = { yes:0, unknown:1, rate_limited:2, error:3, no:4 };
+  const sorted = [...list].sort((a,b)=>(order[a.registered]??9)-(order[b.registered]??9));
+  const found = list.filter(r=>r.registered==="yes").length;
+  const rows = sorted.map(r=>{
+    const leaked = [r.masked_email, r.masked_phone, r.hint].filter(Boolean).map(esc).join(" ")
+      || (r.error ? `<span class="src">${esc(r.error)}</span>` : "");
+    return `<div class="pres-row">
+      <span class="psite">${esc(r.site)}</span>
+      <span class="preg">${mark[r.registered]||esc(r.registered)}</span>
+      <span class="pleak">${leaked}</span></div>`;
+  }).join("");
+  const badge = found
+    ? `<span class="stat good">${found} found</span>`
+    : `<span class="stat muted">none found</span>`;
+  return `<div class="card"><h3>Accounts on this number ${badge}</h3>
+    <div class="pres">${rows}</div></div>`;
+}
+
+function aiCard(p){
+  const ai = p.ai_analysis; if(!ai) return null;
+  if(ai.error) return `<div class="card ai"><h3>AI Analysis</h3><p class="stat bad">${esc(ai.error)}</p></div>`;
+  let body = "";
+  if(ai.answer){ body = `<p>${esc(ai.answer)}</p>`; }
+  else { for(const [lbl,key] of [["Summary","summary"],["Conflicts","conflicts"],["Risk read","risk_read"],["Next steps","next_steps"]]){
+    const v = ai[key]; if(v && v.trim() && v.trim().toLowerCase()!=="none")
+      body += `<div class="lbl">${lbl}</div><p>${esc(v)}</p>`; } }
+  return `<div class="card ai"><h3>AI Analysis</h3>
+    <div class="meta">${esc(ai.provider)}/${esc(ai.model)}, based only on collected data</div>
+    ${body}</div>`;
+}
+
+function footprintCard(p){
+  if(!p.footprint || !p.footprint.length) return null;
+  const groups = p.footprint.map(g=>`<div class="fp-group"><div class="cat">${esc(g.category)}</div>
+    ${g.links.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.label)}</a>`).join("")}</div>`).join("");
+  return `<div class="card"><h3>Search Links (open manually)</h3>${groups}</div>`;
+}
+
+function linkGroups(groups){
+  return (groups||[]).map(g=>`<div class="fp-group"><div class="cat">${esc(g.category)}</div>
+    ${g.links.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.label)}</a>`).join("")}</div>`).join("");
+}
+function countLinks(groups){ return (groups||[]).reduce((a,g)=>a+g.links.length,0); }
+
+function sitesCard(p){
+  const nSites = countLinks(p.sites), nDorks = countLinks(p.dorking);
+  if(!nSites && !nDorks) return null;
+  let body = `<p class="site-note">Open these in new tabs for manual review. Lookup sites and
+    dork searches are separate. Your browser may ask to allow pop-ups.</p><div class="actions">`;
+  if(nSites) body += `<button class="primary" onclick="openLinks('sites')">Open ${nSites} lookup sites</button>`;
+  if(nDorks) body += `<button class="primary" onclick="openLinks('dorking')">Open ${nDorks} dork searches</button>`;
+  body += `</div><div class="site-links">${linkGroups(p.sites)}${linkGroups(p.dorking)}</div>`;
+  return `<div class="card"><h3>Open Sites</h3>${body}</div>`;
+}
+
+function openLinks(which){
+  if(!lastProfile) return;
+  const urls = (lastProfile[which]||[]).flatMap(g=>g.links.map(l=>l.url));
+  let opened = 0;
+  for(const u of urls){ if(window.open(u, "_blank", "noopener")) opened++; }
+  toast(opened ? `Opening ${opened} links` : "Pop-ups blocked. Allow pop-ups for this page, then retry.");
+}
+
+function providerCard(p){
+  const glyph = { ran: "+", skipped: "·", error: "x" };
+  const rows = (p.providers||[]).map(pr=>{
+    const detail = pr.reason || (pr.elapsed_ms!=null ? pr.elapsed_ms+" ms" : "");
+    const label = pr.status==="ran"?"ran":(pr.status==="skipped"?"no key":"error");
+    return `<div class="prov">
+      <span class="mark ${pr.status}">${glyph[pr.status]||"·"}</span>
+      <span class="pname">${esc(pr.name)}</span>
+      <span class="pstat">${label}</span>
+      <span class="pdetail">${esc(detail)}</span></div>`;
+  }).join("");
+  return `<div class="card"><h3>Provider Status</h3>${rows}</div>`;
+}
+
+function dlJSON(){ const b=new Blob([JSON.stringify(lastProfile,null,2)],{type:"application/json"});
+  dl(b, (lastProfile.input.e164||"numint")+".json"); }
+async function copyJSON(){ await navigator.clipboard.writeText(JSON.stringify(lastProfile,null,2)); toast("Copied JSON"); }
+async function dlMarkdown(){
+  const resp = await fetch("/api/scan/markdown",{method:"POST",headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({number:lastProfile.input.e164, no_ai: el("noAi").checked})});
+  const {markdown} = await resp.json();
+  dl(new Blob([markdown],{type:"text/markdown"}), (lastProfile.input.e164||"numint")+".md");
+}
+function dl(blob, name){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+function toast(msg){ const e=el("errbox"); e.innerHTML=`<div class="note">${esc(msg)}</div>`;
+  setTimeout(()=>{ if(e.textContent===msg) e.innerHTML=""; }, 1800); }
+
+el("scanBtn").addEventListener("click", scan);
+el("number").addEventListener("keydown", e=>{ if(e.key==="Enter") scan(); });
+el("ask").addEventListener("keydown", e=>{ if(e.key==="Enter") scan(); });
+el("number").focus();
+</script>
+</body>
+</html>

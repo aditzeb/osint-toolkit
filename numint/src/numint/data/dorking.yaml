@@ -1,0 +1,24 @@
+# Search-engine dork queries for a phone number.
+#
+# `--dorking` opens the `top: true` ones; `--dorking-all` opens every one.
+# A full scan (`--all` or default) lists them all as text instead of opening
+# them. Search engines are global, so every entry works for any country.
+#
+# Placeholders (see core/dorking.py):
+#   {plus_enc} -> %2B14155550123  (URL-encoded E.164, safe inside a query)
+#   {nat_enc}  -> URL-encoded national format, e.g. %28415%29%20555-0123
+#   {natdigits}-> 4155550123      (national significant digits)
+#   {area} {prefix} {suffix}      (NANP parts)
+
+dorks:
+  - {label: "Google (exact)", top: true, template: "https://www.google.com/search?q=%22{plus_enc}%22"}
+  - {label: "Google (all formats)", top: true, template: "https://www.google.com/search?q=%22{plus_enc}%22+OR+%22{nat_enc}%22+OR+%22{natdigits}%22"}
+  - {label: "Bing (exact)", top: true, template: "https://www.bing.com/search?q=%22{plus_enc}%22"}
+  - {label: "DuckDuckGo (exact)", top: true, template: "https://duckduckgo.com/?q=%22{plus_enc}%22"}
+  - {label: "Google (pastes & docs)", top: true, template: "https://www.google.com/search?q=%22{plus_enc}%22+(site%3Apastebin.com+OR+site%3Adocs.google.com+OR+site%3Ascribd.com)"}
+  - {label: "Google (social)", template: "https://www.google.com/search?q=%22{plus_enc}%22+(site%3Afacebook.com+OR+site%3Alinkedin.com+OR+site%3Ainstagram.com+OR+site%3Atwitter.com)"}
+  - {label: "Google (spam & scam reports)", template: "https://www.google.com/search?q=%22{plus_enc}%22+(scam+OR+spam+OR+complaint+OR+fraud)"}
+  - {label: "Google (classifieds)", template: "https://www.google.com/search?q=site%3Acraigslist.org+%22{natdigits}%22"}
+  - {label: "Yandex (exact)", template: "https://yandex.com/search/?text=%22{plus_enc}%22"}
+  - {label: "Brave (exact)", template: "https://search.brave.com/search?q=%22{plus_enc}%22"}
+  - {label: "Startpage (exact)", template: "https://www.startpage.com/sp/search?query=%22{plus_enc}%22"}

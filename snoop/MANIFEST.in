@@ -1,0 +1,3 @@
+include README.md LICENSE CHANGELOG.md PROGRESS.md RECORDING_GUIDE.md .env.example
+recursive-include snoop/data *.json *.html
+recursive-include tests/fixtures *.json

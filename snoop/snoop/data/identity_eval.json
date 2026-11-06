@@ -1,0 +1,10 @@
+{
+  "description": "Synthetic labelled cases for conservative identity-link scoring; not a real-world accuracy claim.",
+  "cases": [
+    {"id":"linked_profiles","label":"linked","target":"Alex Example","context":["robotics"],"hits":[{"platform":"GitHub","url":"https://github.com/alexexample","display_name":"Alex Example","bio":"robotics","links":["https://dev.to/alexexample"],"extra":{"matched_handle":"alexexample"}},{"platform":"Dev.to","url":"https://dev.to/alexexample","display_name":"Alex Example","bio":"robotics","links":["https://github.com/alexexample"],"extra":{"matched_handle":"alexexample"}}]},
+    {"id":"unrelated_namesake","label":"unrelated","target":"Alex Example","context":["robotics"],"hits":[{"platform":"Steam","url":"https://steamcommunity.com/id/alexexample","display_name":"Morgan Other","bio":"music","links":[],"extra":{"matched_handle":"alexexample"}}]},
+    {"id":"ambiguous_same_name","label":"unresolved","target":"Alex Example","context":[],"hits":[{"platform":"GitHub","url":"https://github.com/alexexample","display_name":"Alex Example","bio":"","links":[],"extra":{"matched_handle":"alexexample"}}]},
+    {"id":"copied_image","label":"unresolved","target":"Alex Example","context":[],"hits":[{"platform":"GitHub","url":"https://github.com/alexexample","display_name":"","avatar":"https://images.example/avatar.jpg","links":[],"extra":{"matched_handle":"alexexample"}},{"platform":"Behance","url":"https://behance.net/alexexample","display_name":"","avatar":"https://images.example/avatar.jpg","links":[],"extra":{"matched_handle":"alexexample"}}]},
+    {"id":"contradictory_name","label":"unrelated","target":"Alex Example","context":["Berlin"],"hits":[{"platform":"Reddit","url":"https://reddit.com/user/alexexample","display_name":"Jamie Different","bio":"Berlin","links":[],"extra":{"matched_handle":"alexexample"}}]}
+  ]
+}

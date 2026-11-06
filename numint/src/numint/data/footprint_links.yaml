@@ -1,0 +1,51 @@
+# Footprint link templates. Config-driven so new dorks need no code changes.
+#
+# Placeholders available:
+#   {e164}      -> +14155550123
+#   {digits}    -> 14155550123        (E.164 without '+')
+#   {national}  -> (415) 555-0123
+#   {natdigits} -> 4155550123         (national significant digits only)
+#   {plus_enc}  -> %2B14155550123     (URL-encoded +E.164)
+#
+# NOTE: These are links for an investigator to open manually. Numint never
+# scrapes these sites, automates against them, or bypasses any restriction.
+
+search_engines:
+  - label: "Google (exact E.164)"
+    template: 'https://www.google.com/search?q=%22{e164}%22'
+  - label: "Google (national format)"
+    template: 'https://www.google.com/search?q=%22{national}%22'
+  - label: "Bing"
+    template: 'https://www.bing.com/search?q=%22{e164}%22'
+  - label: "DuckDuckGo"
+    template: 'https://duckduckgo.com/?q=%22{e164}%22'
+  - label: "Google (docs & pastes dork)"
+    template: 'https://www.google.com/search?q=%22{e164}%22+(site%3Apastebin.com+OR+site%3Adocs.google.com)'
+
+messaging:
+  - label: "WhatsApp (wa.me)"
+    template: 'https://wa.me/{digits}'
+  - label: "Telegram"
+    template: 'https://t.me/{digits}'
+  - label: "Viber"
+    template: 'viber://chat?number={plus_enc}'
+  - label: "Skype"
+    template: 'skype:{e164}?call'
+
+reverse_lookup:
+  - label: "Truecaller (search)"
+    template: 'https://www.truecaller.com/search/{country_iso}/{digits}'
+  - label: "Sync.me"
+    template: 'https://sync.me/search/?number={digits}'
+  - label: "WhoCallsMe"
+    template: 'https://whocallsme.com/Phone-Number.aspx/{natdigits}'
+  - label: "Should I Answer"
+    template: 'https://www.shouldianswer.com/phone-number/{natdigits}'
+
+social:
+  - label: "Facebook (phone search)"
+    template: 'https://www.facebook.com/search/top?q={plus_enc}'
+  - label: "LinkedIn"
+    template: 'https://www.linkedin.com/search/results/all/?keywords={plus_enc}'
+  - label: "X / Twitter"
+    template: 'https://twitter.com/search?q={plus_enc}'

@@ -1,0 +1,34 @@
+# Reverse-lookup / people-search sites for the `--lookup` tool.
+#
+# `numint <number> --lookup` opens the `top: true` sites (the few that show the
+# most, and actually work). `numint <number> --lookup-all` opens every site
+# below. It only opens URLs for manual review; it never scrapes or logs in.
+# Dork searches are separate (see dorking.yaml).
+#
+# Placeholders: {area} {prefix} {suffix} {digits10} {natdigits} {digits}
+#               {e164} {plus_enc} {iso}   (see core/lookup.py)
+# scope: "us" sites open only for NANP (US/Canada) numbers; "global" for any.
+
+reverse_lookup:
+  - {label: "ThatsThem", scope: us, top: true, template: "https://thatsthem.com/phone/{area}-{prefix}-{suffix}"}
+  - {label: "TruePeopleSearch", scope: us, top: true, template: "https://www.truepeoplesearch.com/results?phoneno=({area}){prefix}-{suffix}"}
+  - {label: "FastPeopleSearch", scope: us, top: true, template: "https://www.fastpeoplesearch.com/{area}-{prefix}-{suffix}"}
+  - {label: "Whitepages", scope: us, top: true, template: "https://www.whitepages.com/phone/1-{area}-{prefix}-{suffix}"}
+  - {label: "Sync.me", scope: global, top: true, template: "https://sync.me/search/?number={digits}"}
+  - {label: "SearchPeopleFree", scope: us, template: "https://www.searchpeoplefree.com/phone-lookup/{area}-{prefix}-{suffix}"}
+  - {label: "CyberBackgroundChecks", scope: us, template: "https://www.cyberbackgroundchecks.com/phone/{area}-{prefix}-{suffix}"}
+  - {label: "AdvancedBackgroundChecks", scope: us, template: "https://www.advancedbackgroundchecks.com/{area}-{prefix}-{suffix}"}
+  - {label: "USPhonebook", scope: us, template: "https://www.usphonebook.com/{area}-{prefix}-{suffix}"}
+  - {label: "PeopleSearchNow", scope: us, template: "https://www.peoplesearchnow.com/phone/{area}-{prefix}-{suffix}"}
+  - {label: "411", scope: us, template: "https://www.411.com/phone/1-{area}-{prefix}-{suffix}"}
+  - {label: "CallerSmart", scope: us, template: "https://www.callersmart.com/phone-number/{area}-{prefix}-{suffix}"}
+  - {label: "Spytox", scope: us, template: "https://www.spytox.com/people/search?phone={area}-{prefix}-{suffix}"}
+  - {label: "Nuwber", scope: us, template: "https://nuwber.com/search/phone?phone={digits10}"}
+  - {label: "ZabaSearch", scope: us, template: "https://www.zabasearch.com/phone/{digits10}"}
+  - {label: "PhoneOwner", scope: us, template: "https://phoneowner.com/phone/{digits10}"}
+  - {label: "OKCaller", scope: us, template: "https://www.okcaller.com/{digits10}"}
+  - {label: "WhoseNo", scope: us, template: "https://www.whoseno.com/US/{digits10}"}
+  - {label: "800notes", scope: us, template: "https://800notes.com/Phone.aspx/1-{area}-{prefix}-{suffix}"}
+  - {label: "Infotracer", scope: us, template: "https://infotracer.com/phone-lookup/results/?phone={digits10}"}
+  - {label: "YellowPages", scope: us, template: "https://people.yellowpages.com/whitepages/phone-lookup?phone={digits10}"}
+  - {label: "Truecaller", scope: global, template: "https://www.truecaller.com/search/{iso}/{natdigits}"}
