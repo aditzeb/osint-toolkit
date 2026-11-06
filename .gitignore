@@ -1,0 +1,77 @@
+# ==========================================
+# Virtual Environments & Python Packages
+# ==========================================
+.venv/
+*/.venv/
+venv/
+*/venv/
+env/
+*/env/
+ENV/
+build/
+dist/
+*.egg-info/
+*/.egg-info/
+.pytest_cache/
+*/.pytest_cache/
+.coverage
+htmlcov/
+__pycache__/
+*/__pycache__/
+*/*/__pycache__/
+*/*/*/__pycache__/
+*.py[cod]
+*$py.class
+
+# ==========================================
+# Sensitive Credentials & User Data (STRICT)
+# ==========================================
+# Osintgram credentials and session files
+Osintgram/config/*
+!Osintgram/config/credentials.ini.example
+**/credentials.ini
+**/instagrapi_session.json
+**/search_history.json
+**/*session*.json
+**/requests.sqlite3
+**/cache/
+**/dossier/
+
+# Logs and environment variables
+*.log
+**/*.log
+.env
+**/.env
+.env.*
+**/.env.*
+!**/.env.example
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# ==========================================
+# Generated OSINT Reports & Output Dumps
+# ==========================================
+*.txt
+!requirements*.txt
+!**/requirements*.txt
+!**/ai_prompt.txt
+*.csv
+*.xlsx
+*.ndjson
+*.xmind
+reports/
+**/reports/
+
+# ==========================================
+# Operating System & IDE Files
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

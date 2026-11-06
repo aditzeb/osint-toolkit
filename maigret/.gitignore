@@ -1,0 +1,57 @@
+# Virtual Environment
+venv/
+.venv/
+
+# Editor Configurations
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+
+# Pip
+src/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Logs and backups
+*.log
+*.bak
+
+# Output files, except requirements.txt
+*.txt
+!requirements.txt
+!maigret/resources/ai_prompt.txt
+
+# Comma-Separated Values (CSV) Reports
+*.csv
+
+# MacOS Folder Metadata File
+.DS_Store
+/reports/
+
+# Testing
+.coverage
+dist/
+htmlcov/
+/test_*
+
+# Maigret custom user settings (not default resources)
+/settings.json
+/web_settings.json
+/reports/
+
+# other
+*.egg-info
+build
+LLM
+lib
+.claude/
+
+# Sphinx i18n: .mo are compiled from .po at build time
+docs/source/locale/**/*.mo
+
+# Secrets
+.env
