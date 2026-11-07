@@ -12,6 +12,7 @@ build/
 dist/
 *.egg-info/
 */.egg-info/
+*/*.egg-info/
 .pytest_cache/
 */.pytest_cache/
 .coverage
@@ -33,6 +34,8 @@ Osintgram/config/*
 **/instagrapi_session.json
 **/search_history.json
 **/*session*.json
+**/*creds*.m
+**/*token*.json
 **/requests.sqlite3
 **/cache/
 **/dossier/
@@ -75,4 +78,3 @@ desktop.ini
 .idea/
 *.sublime-project
 *.sublime-workspace
-

@@ -1,10 +1,10 @@
 @echo off
 setlocal
 title OSINT Toolkit - Setup
-echo ============================================================
-echo               OSINT TOOLKIT - INITIAL SETUP
-echo    Sherlock ^| Maigret ^| Osintgram ^| Numint ^| Snoop
-echo ============================================================
+echo ======================================================================
+echo                    OSINT TOOLKIT - INITIAL SETUP
+echo  Sherlock ^| Maigret ^| Osintgram ^| Numint ^| Snoop ^| Holehe ^| GHunt ^| ID
+echo ======================================================================
 echo.
 
 :: 1. Check Python installation
@@ -22,7 +22,7 @@ echo.
 set "ROOT_DIR=%~dp0"
 
 :: 2. Setup Sherlock
-echo [1/5] Setting up Sherlock (Username OSINT across 400+ platforms)...
+echo [1/7] Setting up Sherlock (Username OSINT across 400+ platforms)...
 if not exist "%ROOT_DIR%sherlock\.venv" (
     echo       Creating virtual environment...
     python -m venv "%ROOT_DIR%sherlock\.venv"
@@ -38,7 +38,7 @@ if %errorlevel% equ 0 (
 echo.
 
 :: 3. Setup Maigret
-echo [2/5] Setting up Maigret (Dossier profiler across 5,900+ sites)...
+echo [2/7] Setting up Maigret (Dossier profiler across 5,900+ sites)...
 if not exist "%ROOT_DIR%maigret\.venv" (
     echo       Creating virtual environment...
     python -m venv "%ROOT_DIR%maigret\.venv"
@@ -54,7 +54,7 @@ if %errorlevel% equ 0 (
 echo.
 
 :: 4. Setup Osintgram
-echo [3/5] Setting up Osintgram (Instagram Intelligence Dashboard)...
+echo [3/7] Setting up Osintgram (Instagram Intelligence Dashboard)...
 if not exist "%ROOT_DIR%Osintgram\.venv" (
     echo       Creating virtual environment...
     python -m venv "%ROOT_DIR%Osintgram\.venv"
@@ -77,7 +77,7 @@ if %errorlevel% equ 0 (
 echo.
 
 :: 5. Setup Numint
-echo [4/5] Setting up Numint (Phone Number Intelligence ^& Web UI)...
+echo [4/7] Setting up Numint (Phone Number Intelligence ^& Web UI)...
 if not exist "%ROOT_DIR%numint\.venv" (
     echo       Creating virtual environment...
     python -m venv "%ROOT_DIR%numint\.venv"
@@ -93,7 +93,7 @@ if %errorlevel% equ 0 (
 echo.
 
 :: 6. Setup Snoop
-echo [5/5] Setting up Snoop (Persona Footprint ^& Evidence Investigation)...
+echo [5/7] Setting up Snoop (Persona Footprint ^& Evidence Investigation)...
 if not exist "%ROOT_DIR%snoop\.venv" (
     echo       Creating virtual environment...
     python -m venv "%ROOT_DIR%snoop\.venv"
@@ -108,10 +108,44 @@ if %errorlevel% equ 0 (
 )
 echo.
 
-echo ============================================================
-echo                SETUP COMPLETED SUCCESSFULLY!
-echo ============================================================
-echo All 5 OSINT engines are configured and ready to use.
+:: 7. Setup Holehe
+echo [6/7] Setting up Holehe (Email OSINT across 120+ platforms)...
+if not exist "%ROOT_DIR%holehe\.venv" (
+    echo       Creating virtual environment...
+    python -m venv "%ROOT_DIR%holehe\.venv"
+)
+echo       Installing dependencies...
+"%ROOT_DIR%holehe\.venv\Scripts\python.exe" -m pip install --upgrade pip >nul 2>nul
+"%ROOT_DIR%holehe\.venv\Scripts\pip.exe" install -e "%ROOT_DIR%holehe" >nul 2>nul
+if %errorlevel% equ 0 (
+    echo       [OK] Holehe setup complete.
+) else (
+    echo       [WARNING] Holehe setup encountered an issue. Check pip output.
+)
+echo.
+
+:: 8. Setup GHunt
+echo [7/7] Setting up GHunt (Google / Gmail Account OSINT)...
+if not exist "%ROOT_DIR%GHunt\.venv" (
+    echo       Creating virtual environment...
+    python -m venv "%ROOT_DIR%GHunt\.venv"
+)
+echo       Installing dependencies...
+"%ROOT_DIR%GHunt\.venv\Scripts\python.exe" -m pip install --upgrade pip >nul 2>nul
+"%ROOT_DIR%GHunt\.venv\Scripts\pip.exe" install -e "%ROOT_DIR%GHunt" >nul 2>nul
+if %errorlevel% equ 0 (
+    echo       [OK] GHunt setup complete.
+) else (
+    echo       [WARNING] GHunt setup encountered an issue. Check pip output.
+)
+echo.
+
+echo [+] Indonesia OSINT Suite (indo_osint) uses zero-dependency Python stdlib [READY].
+echo.
+echo ======================================================================
+echo                   SETUP COMPLETED SUCCESSFULLY!
+echo ======================================================================
+echo All 8 OSINT engines are configured and ready to use.
 echo Launching the master menu now...
 timeout /t 3 >nul
 call "%ROOT_DIR%menu.bat"
