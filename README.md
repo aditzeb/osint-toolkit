@@ -8,13 +8,13 @@
 
 A turnkey, pre-configured **Open-Source Intelligence (OSINT)** suite for Windows 11. 
 
-This repository bundles and integrates **eight OSINT engines**—combining seven industry-standard global reconnaissance tools with a built-in **Indonesia OSINT Intelligence Suite (`indo_osint`)**—complete with isolated virtual environments, one-click Windows launchers, an interactive master terminal menu, and modern graphical Web dashboards.
+This repository bundles and integrates **eight OSINT engines**—combining seven industry-standard global reconnaissance tools with a built-in **Indonesia OSINT & Data Bocor Intelligence Suite (`indo_osint`)**—complete with isolated virtual environments, a **single unified Windows launcher (`run.bat`)**, an interactive Master Control Center (`app.py`), and modern graphical Web dashboards.
 
 ---
 
 ## 📦 Included Engines & Upstream Credits
 
-This suite integrates seven open-source projects alongside a custom Indonesian regional intelligence package. All core search capabilities, database definitions, and API clients belong to their respective original authors and maintainers. Full attribution is listed below:
+This suite integrates seven open-source projects alongside a custom Indonesian regional intelligence & breach package. All core search capabilities, database definitions, and API clients belong to their respective original authors and maintainers. Full attribution is listed below:
 
 | Engine | Upstream Repository | Author / Maintainers | License | Description |
 | :--- | :--- | :--- | :--- | :--- |
@@ -25,27 +25,32 @@ This suite integrates seven open-source projects alongside a custom Indonesian r
 | **Snoop** | [whoamitang/snoop](https://github.com/whoamitang/snoop) | whoamitang & team | MIT | Conservative, evidence-backed public profile audit, identity linking, document analysis, and case workspace. |
 | **Holehe** | [megadose/holehe](https://github.com/megadose/holehe) | Palenath (megadose) | GPLv3 | Checks if an email address is registered across 120+ sites (Twitter, Instagram, Spotify, Adobe, etc.) without alerting the target. |
 | **GHunt** | [mxrch/GHunt](https://github.com/mxrch/GHunt) | mxrch | AGPL-3.0 | Offensive Google / Gmail framework extracting GAIA ID, Maps reviews, Calendar, Photos, and Drive artifacts. |
-| **Indo OSINT** | `indo_osint/` (Built-in) | OSINT Toolkit Contributors | MIT | Indonesian Regional Intelligence: 16-digit NIK KTP decoder, 18-digit NIP ASN parser, Telco & E-Wallet VA generator, Plat Nomor TNKB decoder, and PDDikti / Mahkamah Agung / LPSE dorks. |
+| **Indo OSINT** | `indo_osint/` (Built-in) | OSINT Toolkit Contributors | MIT | Indonesian Regional & Data Bocor Intelligence: 16-digit NIK KTP decoder, 18-digit NIP ASN parser, Telco & E-Wallet VA generator, Plat Nomor TNKB decoder, PDDikti dorks, live XposedOrNot breaches & Hudson Rock infostealers, and offline SQLite FTS5 database search. |
 
 ---
 
 ## ✨ Features
 
-- **All-in-One Master Navigator (`app.py` & `run.bat` / `menu.bat`)**: Unified interactive control center with rich hierarchical menus, target-oriented guided workflows, dual-engine sequential scans, web dashboard manager, evidence locker, and diagnostic self-healing.
+- **Single All-in-One Windows Launcher (`run.bat`)**: One launcher to rule them all. Double-click to open the full interactive Master Control Center, or run any tool directly via CLI arguments (`run.bat sherlock`, `run.bat maigret`, `run.bat indo`, etc.).
 - **Isolated Virtual Environments (`.venv`)**: Each external engine maintains its own isolated Python virtual environment, eliminating dependency version conflicts (e.g. `pydantic`, `aiohttp`, `fastapi`, `httpx`, `pillow`).
-- **Interactive Master Menu (`menu.bat`)**: Single control center with 14 quick actions to scan usernames, check emails, inspect phone numbers, audit person footprints, run Indonesian regional intelligence, or launch Web UIs.
-- **One-Click Automated Setup (`setup.bat`)**: Sets up virtual environments and installs all required dependencies in a single click.
-- **Indonesia OSINT Intelligence (`indo_osint`)**:
-  - **NIK KTP 16-Digit Decoder**: Extracts Province (38 provinces), Kabupaten/Kota (514 regencies/cities), Kecamatan (live Kemendagri Dukcapil lookup), Gender, Birthdate, Age, Javanese Weton/Pasaran, Zodiac, Generation, and sequence number.
-  - **NIP ASN / PNS 18-Digit Decoder**: Extracts Birthdate, CPNS Appointment Year/Month (TMT), years of service, BUP retirement year, and gender.
-  - **Indonesian Phone & E-Wallet VA Generator**: Identifies Indonesian cellular operators (Telkomsel, Indosat, XL, Axis, Tri, Smartfren) and 80+ PSTN landline area codes, generates Virtual Account codes for **DANA, OVO, GoPay, ShopeePay, and LinkAja**, and builds Indonesian fraud/marketplace dorks.
-  - **Indonesian License Plate (Plat Nomor / TNKB) Decoder**: Maps all regional codes (`A`–`PY`), decodes Jadetabek (`B`) city sub-codes and vehicle classifications, and links to regional E-Samsat portals.
-  - **Indonesian Public Registry Dorks**: Generates targeted queries for **PDDikti** (students/lecturers), **Putusan Mahkamah Agung** (court verdicts), **SIPP Pengadilan**, **LPSE** government procurement, and **AHU Kemenkumham** company records.
-- **Web Dashboards & CLI Support**:
+- **Target-Oriented Investigation Workflows**:
+  - **Username Reconnaissance**: Sherlock (400+ platforms), Maigret (5,900+ sites), or automatic Dual-Engine sequential scans.
+  - **Email Intelligence & Data Bocor**: Triple-threat reconnaissance combining Holehe (120+ sites), GHunt (Google Account artifacts), and live Data Bocor checks (XposedOrNot + Hudson Rock Infostealers + GitHub profile linking).
+  - **Phone Number Intelligence**: Global Numint profile + Indonesian cellular operator, PSTN landline area codes, and E-Wallet Virtual Account name-resolution numbers.
+  - **Indonesian Regional Intelligence (`indo_osint`)**:
+    - **NIK KTP 16-Digit Decoder**: Extracts Province (38 provinces), Kabupaten/Kota (514 regencies/cities), Kecamatan (live Kemendagri Dukcapil API lookup), Gender, Birthdate, Age, Javanese Weton/Pasaran, Zodiac, Generation, and sequence number.
+    - **NIP ASN / PNS 18-Digit Decoder**: Extracts Birthdate, CPNS Appointment Year/Month (TMT), years of service, BUP retirement year, and gender.
+    - **Indonesian Phone & E-Wallet VA Generator**: Identifies cellular operators (Telkomsel, Indosat, XL, Axis, Tri, Smartfren) and 80+ PSTN landline area codes, generates Virtual Account codes for **DANA, OVO, GoPay, ShopeePay, and LinkAja**, and builds Indonesian fraud/marketplace dorks.
+    - **Indonesian License Plate (Plat Nomor / TNKB) Decoder**: Maps all regional codes (`A`–`PY`), decodes Jadetabek (`B`) city sub-codes and vehicle classifications, and links to regional E-Samsat portals.
+    - **Indonesian Public Registry Dorks**: Generates targeted queries for **PDDikti** (students/lecturers), **Putusan Mahkamah Agung** (court verdicts), **SIPP Pengadilan**, **LPSE** government procurement, and **AHU Kemenkumham** company records.
+    - **Live Data Bocor & Infostealer Intelligence**: Real-time breach lookup across 480+ databases (Tokopedia, Bukalapak, Bhinneka, RedDoorz, etc.) and infostealer malware infection history via Hudson Rock.
+    - **Private Offline Local Database (SQLite FTS5)**: Drop any private or investigation CSVs into `data/` and perform instant sub-second Full-Text Search across NIK, Phone, Name, Email, and Plate.
+- **Web Dashboards Hub**:
   - **Maigret Web UI** on port `5000`
   - **Osintgram Web Dashboard** on port `8000`
   - **Numint Web Dashboard** on port `8080`
   - **Snoop Web Workspace** on port `8005`
+  - **One-Click Multi-Launch**: Start and monitor all 4 dashboards simultaneously.
 
 ---
 
@@ -55,23 +60,22 @@ This suite integrates seven open-source projects alongside a custom Indonesian r
 - **Windows 10 / 11 (64-bit)**
 - **Python 3.11+** installed and added to `PATH` (download from [python.org](https://www.python.org/downloads/) or via Windows Terminal: `winget install Python.Python.3.13`).
 
-### 2. Clone & Setup
+### 2. Clone Repository
 ```cmd
 git clone https://github.com/aditzeb/osint-toolkit.git
 cd osint-toolkit
 ```
 
-Double-click **`setup.bat`** (or run `.\setup.bat` in Command Prompt / PowerShell).  
-The script automatically provisions `.venv` for each tool, installs dependencies, initializes templates, and opens the master menu!
+### 3. Launch
+Simply double-click **`run.bat`**!  
+On the very first launch, `run.bat` automatically detects missing environments, asks to run setup, provisions all virtual environments, and opens the Master Control Center!
 
 ---
 
 ## 🎮 How to Use
 
-### 🌟 All-in-One Master Navigator (`run.bat` / `menu.bat` / `app.py`)
-Simply double-click **`run.bat`** (or **`menu.bat`**) to launch the interactive Master Navigator. 
-
-The application automatically launches the rich, color-coded **`app.py`** console interface (or seamlessly falls back to pure Batch mode if run with `--batch` or in environments without Python):
+### 🌟 All-in-One Master Navigator (`run.bat`)
+Double-click **`run.bat`** to open the interactive menu:
 
 ```text
 ============================================================================
@@ -82,8 +86,8 @@ The application automatically launches the rich, color-coded **`app.py`** consol
 ----------------------------------------------------------------------------
 Select an operation mode to begin:
 
- [1] 🎯 TARGET INVESTIGATION       (Guided search: Username, Email, Phone, NIK, etc.)
- [2] ⚙️  INDIVIDUAL WORKSPACES      (Direct CLI for Sherlock, Maigret, Holehe, etc.)
+ [1] 🎯 TARGET INVESTIGATION       (Guided search: Username, Email/Breaches, Phone, NIK, etc.)
+ [2] ⚙️  INDIVIDUAL WORKSPACES      (Direct CLI for Sherlock, Maigret, Holehe, GHunt, etc.)
  [3] 🌐 WEB DASHBOARDS HUB         (One-Click Launch: Ports 5000, 8000, 8080, 8005)
  [4] 📁 EVIDENCE & REPORTS LOCKER  (View generated HTML/CSV/XLSX intelligence)
  [5] 🩺 HEALTH & SYSTEM DIAGNOSTICS(Verify all 8 venvs, run setup, or open shell)
@@ -92,93 +96,64 @@ Select an operation mode to begin:
 ----------------------------------------------------------------------------
 ```
 
-### 🧭 Hierarchical Navigation Features
-
-1. **🎯 Target Investigation (Multi-Engine Orchestration)**:
-   - **Username OSINT**: Run Sherlock (400+ platforms), Maigret (5,900+ sites), or a **Dual-Engine Scan** executing both in sequence with reports saved to `reports/`.
-   - **Email Intelligence**: Run Holehe (120+ platforms) and GHunt (Google Account, Gaia ID, Maps reviews) individually or via **Dual Email Recon**.
-   - **Phone Intelligence**: Numint global profile + Indonesian Telco & E-Wallet VA generator (DANA, OVO, GoPay, ShopeePay, LinkAja).
-   - **Indonesia Regional Intelligence**: 16-digit NIK KTP, 18-digit NIP ASN, Plat Nomor TNKB, and PDDikti/Mahkamah Agung/LPSE public registry dorks.
-   - **Instagram Reconnaissance**: Launch Osintgram Web UI, login via credentials, or authenticate via browser `sessionid`.
-   - **Persona Footprint Audit**: Run Snoop standard or deep evidence-backed investigation.
-
-2. **🌐 Web Dashboards Hub (One-Click Launch & Monitor)**:
-   - Live port inspection checks if services are already running on ports `5000`, `8000`, `8080`, and `8005`.
-   - Launch individual dashboards or trigger **Option [5]** to launch all four web UIs simultaneously and open them in your browser!
-
-3. **📁 Evidence Locker & Reports Viewer**:
-   - Centralizes and catalogs all exported files (`.html`, `.csv`, `.xlsx`, `.pdf`, `.json`) in `reports/`.
-   - Open reports immediately in your default browser or spreadsheet viewer.
-   - One-click button to open the `reports/` folder in Windows File Explorer.
-
-4. **🩺 System Diagnostics & Developer Shell**:
-   - Live status check for all 8 virtual environments and dependencies.
-   - One-click trigger for `setup.bat` to provision or repair missing environments.
-   - Spawns an **OSINT Developer Terminal** with all eight `.venv\Scripts` loaded into `PATH`.
-
 ---
 
-### Command-Line Usage
+### 💻 Command-Line Direct Aliases (`run.bat <command>`)
 
-You can run any tool directly from PowerShell or Command Prompt:
+You can run any tool or guided workflow directly from PowerShell or Command Prompt using **`run.bat`**:
 
-#### 1. Sherlock (Usernames across 400+ platforms)
+#### 1. Username Reconnaissance
 ```powershell
-.\sherlock.bat target_username
-.\sherlock.bat --xlsx --csv target_username
+.\run.bat sherlock target_username
+.\run.bat maigret target_username
+.\run.bat maigret target_username -a        # Scan all 5,900+ sites
+.\run.bat --username target_username        # Dual Sherlock + Maigret scan
 ```
 
-#### 2. Maigret (Dossier profiler across 5,900+ sites)
+#### 2. Email Intelligence, Data Bocor & Google OSINT
 ```powershell
-.\maigret.bat target_username
-.\maigret.bat target_username -a          # Scan all 5,900+ sites
-.\maigret.bat --web 5000                   # Launch Web UI (port 5000)
+.\run.bat holehe target@example.com
+.\run.bat holehe --only-used target@example.com
+.\run.bat ghunt email target@gmail.com
+.\run.bat --breach target@example.com       # Live Data Bocor & Infostealers check
+.\run.bat --email target@example.com        # Holehe + GHunt email scan
 ```
 
-#### 3. Osintgram (Instagram Intelligence)
+#### 3. Phone Number & E-Wallet VA
 ```powershell
-.\osintgram.bat
-# Automatically opens http://127.0.0.1:8000 in your browser
+.\run.bat numint +6281234567890
+.\run.bat indo --phone 081234567890         # Telco, PSTN region & DANA/OVO/GoPay/Shopee VA
+.\run.bat --phone +6281234567890           # Combined Numint + Indo OSINT scan
 ```
 
-#### 4. Numint (Phone Number OSINT)
+#### 4. Indonesian Regional OSINT Suite
 ```powershell
-.\numint.bat +6281234567890
-.\numint.bat providers
-.\numint_web.bat                          # Opens http://127.0.0.1:8080
+.\run.bat indo                              # Interactive Indonesian CLI Menu
+.\run.bat indo --nik 3174011708950001       # 16-digit NIK KTP Decoder
+.\run.bat indo --nip 199008172019031005     # 18-digit NIP ASN / PNS Parser
+.\run.bat indo --plate "B 1234 KAA"         # Vehicle License Plate & E-Samsat
+.\run.bat indo --dorks "Target Name"        # PDDikti, Mahkamah Agung, LPSE & AHU
+.\run.bat indo --email target@email.com     # Live Data Bocor (XposedOrNot) & Stealers
+.\run.bat indo --db-search "Budi"           # Offline Private Database FTS5 Search
+.\run.bat indo --db-import my_data.csv      # Fast FTS5 Indexer for local datasets
+.\run.bat indo --db-stats                   # View private database statistics
 ```
 
-#### 5. Snoop (Persona Footprint & Case Investigation)
+#### 5. Persona Footprint & Case Investigation
 ```powershell
-.\snoop.bat "Target Name"
-.\snoop.bat "Target Name" --mode deep
-.\snoop_web.bat                           # Opens http://127.0.0.1:8005
+.\run.bat snoop "Target Name"
+.\run.bat snoop "Target Name" --mode deep
 ```
 
-#### 6. Holehe (Email OSINT across 120+ platforms)
+#### 6. Web Dashboards & Utilities
 ```powershell
-.\holehe.bat target@example.com
-.\holehe.bat --only-used target@example.com
-```
-
-#### 7. GHunt (Google / Gmail OSINT)
-```powershell
-.\ghunt.bat login                         # One-time Google cookie authentication
-.\ghunt.bat email target@gmail.com
-.\ghunt.bat gaia <GAIA_ID>
-```
-
-#### 8. Indonesia OSINT Suite (`indo_osint.bat`)
-```powershell
-# Interactive Menu:
-.\indo_osint.bat
-
-# Direct CLI Flags:
-.\indo_osint.bat --nik 3174011708950001
-.\indo_osint.bat --nip 199008172019031005
-.\indo_osint.bat --phone 081234567890
-.\indo_osint.bat --plate "B 1234 KAA"
-.\indo_osint.bat --dorks "Budi Santoso" --univ "Universitas Indonesia"
+.\run.bat web maigret                       # Launch Maigret Web UI (Port 5000)
+.\run.bat web osintgram                     # Launch Osintgram Web UI (Port 8000)
+.\run.bat web numint                        # Launch Numint Web UI (Port 8080)
+.\run.bat web snoop                         # Launch Snoop Web Workspace (Port 8005)
+.\run.bat web all                           # One-Click Launch ALL 4 Web Dashboards
+.\run.bat --diag                            # System Health & Virtual Environment Status
+.\run.bat setup                             # Run Automated Setup Wizard
 ```
 
 ---
@@ -192,7 +167,7 @@ Osintgram uses Instagram data backends. To use the built-in free `instagrapi` ba
 1. Log in to [instagram.com](https://www.instagram.com) in Chrome, Edge, or Firefox.
 2. Press **`F12`** $\rightarrow$ go to **Application** (Chrome/Edge) or **Storage** (Firefox) $\rightarrow$ **Cookies** $\rightarrow$ `https://www.instagram.com`.
 3. Locate the cookie named **`sessionid`** and copy its value.
-4. Double-click **`login_instagram_sessionid.bat`** (or option `6` in `menu.bat`), paste the `sessionid`, and press Enter.
+4. Run `.\run.bat` $\rightarrow$ Option `[1]` Target Investigation $\rightarrow$ Option `[5]` Instagram Recon $\rightarrow$ Option `[2]` Login via Session ID, paste the `sessionid`, and press Enter.
 
 ---
 
@@ -200,28 +175,19 @@ Osintgram uses Instagram data backends. To use the built-in free `instagrapi` ba
 
 ```text
 OSINT-Toolkit/
-├── run.bat                        # 1-Click All-in-One Master Launcher
-├── menu.bat                       # Master CLI & Batch menu (launches app.py or fallback)
-├── app.py                         # All-in-One Interactive Navigator (guided workflows & hub)
-├── setup.bat                      # 1-click automated dependency installer
+├── run.bat                        # ALL-IN-ONE MASTER WINDOWS LAUNCHER
+├── app.py                         # Master Control Center (guided workflows & hub)
 ├── reports/                       # Centralized evidence locker for generated dossiers
-├── sherlock.bat                   # Sherlock launcher
-├── maigret.bat                    # Maigret launcher
-├── osintgram.bat                  # Osintgram Web server launcher
-├── numint.bat                     # Numint Phone OSINT launcher
-├── numint_web.bat                 # Numint Web dashboard launcher
-├── snoop.bat                      # Snoop Persona OSINT launcher
-├── snoop_web.bat                  # Snoop Web workspace launcher
-├── holehe.bat                     # Holehe Email OSINT launcher
-├── ghunt.bat                      # GHunt Google OSINT launcher
-├── indo_osint.bat                 # Indonesia OSINT Suite launcher
-├── login_instagram.bat            # Instagrapi CLI login helper
-├── login_instagram_sessionid.bat  # Instagrapi sessionid login helper
+├── data/                          # Local private database directory (.gitignored)
+│   └── local_osint.db             # Offline SQLite FTS5 database (.gitignored)
 ├── .gitignore                     # Strict exclusion of sessions, credentials & caches
 ├── README.md                      # Documentation & Upstream Credits
+├── README_SETUP.md                # Detailed setup guide
 │
-├── indo_osint/                    # Indonesia OSINT Intelligence Suite
+├── indo_osint/                    # Indonesia OSINT & Data Bocor Intelligence
 │   ├── cli.py                     # Interactive CLI & command-line flags
+│   ├── breach_lookup.py           # Live Data Bocor (XposedOrNot) & Stealer (Hudson Rock) API
+│   ├── db_search.py               # Fast local SQLite FTS5 search & CSV importer
 │   ├── nik_parser.py              # 16-digit NIK KTP decoder + Kemendagri lookup
 │   ├── phone_intel.py             # Telco prefix, PSTN area code & E-Wallet VA generator
 │   ├── plate_decoder.py           # TNKB Plat Nomor region/sub-region decoder
@@ -241,8 +207,8 @@ OSINT-Toolkit/
 
 ## 🔒 Security & Privacy Notice
 
-- All personal credentials, Instagram cookies, SerpAPI keys (`.env`), search caches, and generated dossier reports are strictly listed in [.gitignore](file:///.gitignore) and will **never** be committed or uploaded.
-- Never commit your `credentials.ini`, `.env`, or `instagrapi_session.json` files.
+- All personal credentials, Instagram cookies, SerpAPI keys (`.env`), search caches, private local databases (`data/*.db`), and generated dossier reports are strictly listed in [.gitignore](file:///.gitignore) and will **never** be committed or uploaded.
+- Never commit your `credentials.ini`, `.env`, `instagrapi_session.json`, or local dataset files.
 
 ---
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-              OSINT TOOLKIT - ALL-IN-ONE MASTER CONTROL CENTER (v2.0)
+              OSINT TOOLKIT - ALL-IN-ONE MASTER CONTROL CENTER (v2.1)
          Sherlock | Maigret | Osintgram | Numint | Snoop | Holehe | GHunt
-                         + INDONESIA OSINT SUITE
+                  + INDONESIA OSINT & DATA BOCOR INTELLIGENCE
 ================================================================================
 Author: OSINT Toolkit Maintainers
 License: MIT / Multi-License
@@ -17,7 +17,6 @@ import webbrowser
 import socket
 import time
 import shutil
-import glob
 from pathlib import Path
 from datetime import datetime
 
@@ -40,6 +39,8 @@ C_WHITE   = "\033[97m"
 ROOT_DIR = Path(__file__).resolve().parent
 REPORTS_DIR = ROOT_DIR / "reports"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+DATA_DIR = ROOT_DIR / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 ENGINES = {
     "sherlock": {
@@ -87,7 +88,7 @@ ENGINES = {
     },
     "indo_osint": {
         "name": "Indo OSINT",
-        "desc": "Indonesian Regional Intelligence (NIK, NIP, Phone, Plat, Dorks)",
+        "desc": "Indonesian Regional Intelligence (NIK, NIP, Phone, Plat, Dorks, Data Bocor, Local DB)",
         "cli": ROOT_DIR / "indo_osint" / "cli.py",
         "dir": ROOT_DIR / "indo_osint",
     },
@@ -273,13 +274,14 @@ def workflow_username():
 
 def workflow_email():
     while True:
-        print_banner("Target Investigation > Email Intelligence")
-        print(f"{C_WHITE}{C_BOLD}Investigate email addresses across 120+ platforms & Google ecosystem:{C_RESET}\n")
-        print(f" {C_GREEN}[1]{C_RESET} Holehe Scan        (Check registration across 120+ platforms)")
-        print(f" {C_GREEN}[2]{C_RESET} Holehe Used Only   (Filter and display registered sites only)")
-        print(f" {C_GREEN}[3]{C_RESET} GHunt Email OSINT  (Google Account, GAIA ID, Maps, Drive, Photos)")
-        print(f" {C_GREEN}[4]{C_RESET} 🚀 Dual Email Scan (Run Holehe + GHunt consecutively)")
-        print(f" {C_GREEN}[5]{C_RESET} GHunt Login Wizard (Authenticate Google cookies - required for GHunt)")
+        print_banner("Target Investigation > Email Intelligence & Data Bocor")
+        print(f"{C_WHITE}{C_BOLD}Investigate email addresses across 120+ platforms, breaches, stealers & Google:{C_RESET}\n")
+        print(f" {C_GREEN}[1]{C_RESET} Holehe Scan           (Check registration across 120+ platforms)")
+        print(f" {C_GREEN}[2]{C_RESET} Holehe Used Only      (Filter and display registered sites only)")
+        print(f" {C_GREEN}[3]{C_RESET} GHunt Email OSINT     (Google Account, GAIA ID, Maps, Drive, Photos)")
+        print(f" {C_GREEN}[4]{C_RESET} ⚠️ Data Bocor & Stealers(Live XposedOrNot breaches & Hudson Rock stealers)")
+        print(f" {C_GREEN}[5]{C_RESET} 🚀 Triple Email Recon (Holehe + GHunt + Live Data Bocor Scan)")
+        print(f" {C_GREEN}[6]{C_RESET} GHunt Login Wizard    (Authenticate Google cookies for GHunt)")
         print(f"\n {C_YELLOW}[B]{C_RESET} Back to Previous Menu")
         print(f" {C_RED}[0]{C_RESET} Return to Main Menu")
 
@@ -289,18 +291,18 @@ def workflow_email():
         if choice == "0":
             return "MAIN"
 
-        if choice in ["1", "2", "3", "4"]:
+        if choice in ["1", "2", "3", "4", "5"]:
             target_email = input(f"\n{C_WHITE}Enter target email address:{C_RESET} ").strip()
             if not target_email or "@" not in target_email:
                 print(f"{C_RED}[!] Please enter a valid email address.{C_RESET}")
                 time.sleep(1)
                 continue
 
-            if choice in ["1", "2", "4"] and not check_engine_health("holehe"):
+            if choice in ["1", "2", "5"] and not check_engine_health("holehe"):
                 print(f"{C_RED}[ERROR] Holehe venv not found. Run Setup [Option 5] first.{C_RESET}")
                 pause_prompt()
                 continue
-            if choice in ["3", "4"] and not check_engine_health("ghunt"):
+            if choice in ["3", "5"] and not check_engine_health("ghunt"):
                 print(f"{C_RED}[ERROR] GHunt venv not found. Run Setup [Option 5] first.{C_RESET}")
                 pause_prompt()
                 continue
@@ -317,15 +319,19 @@ def workflow_email():
                 print(f"{C_GREEN}[+] Running GHunt Google account reconnaissance on '{target_email}'...{C_RESET}")
                 run_command_interactive([str(ENGINES["ghunt"]["exe"]), "email", target_email])
             elif choice == "4":
-                print(f"{C_CYAN}{C_BOLD}=== STAGE 1/2: HOLEHE 120+ SITES RECONNAISSANCE ==={C_RESET}")
+                run_command_interactive([sys.executable, str(ENGINES["indo_osint"]["cli"]), "--email", target_email])
+            elif choice == "5":
+                print(f"{C_CYAN}{C_BOLD}=== STAGE 1/3: DATA BOCOR & INFOSTEALER CHECK ==={C_RESET}")
+                run_command_interactive([sys.executable, str(ENGINES["indo_osint"]["cli"]), "--email", target_email])
+                print(f"\n{C_CYAN}{C_BOLD}=== STAGE 2/3: HOLEHE 120+ SITES RECONNAISSANCE ==={C_RESET}")
                 run_command_interactive([str(ENGINES["holehe"]["exe"]), "--only-used", target_email])
-                print(f"\n{C_CYAN}{C_BOLD}=== STAGE 2/2: GHUNT GOOGLE ARTIFACT INTELLIGENCE ==={C_RESET}")
+                print(f"\n{C_CYAN}{C_BOLD}=== STAGE 3/3: GHUNT GOOGLE ARTIFACT INTELLIGENCE ==={C_RESET}")
                 run_command_interactive([str(ENGINES["ghunt"]["exe"]), "email", target_email])
-                print(f"\n{C_GREEN}[✓] Combined Email Reconnaissance Complete!{C_RESET}")
+                print(f"\n{C_GREEN}[✓] Comprehensive Email Reconnaissance Complete!{C_RESET}")
 
             pause_prompt()
 
-        elif choice == "5":
+        elif choice == "6":
             if not check_engine_health("ghunt"):
                 print(f"{C_RED}[ERROR] GHunt venv not found. Run Setup [Option 5] first.{C_RESET}")
                 pause_prompt()
@@ -395,14 +401,18 @@ def workflow_phone():
 
 def workflow_indonesia():
     while True:
-        print_banner("Target Investigation > Indonesia OSINT Suite")
-        print(f"{C_WHITE}{C_BOLD}Specialized Indonesian Regional Intelligence & Registry Dorks:{C_RESET}\n")
+        print_banner("Target Investigation > Indonesia OSINT & Data Bocor")
+        print(f"{C_WHITE}{C_BOLD}Specialized Indonesian Regional Intelligence, Data Bocor & Offline Search:{C_RESET}\n")
         print(f" {C_GREEN}[1]{C_RESET} 🪪 NIK KTP Decoder          (16-digit: Prov/Kab/Kec, Birth, Weton, Age)")
         print(f" {C_GREEN}[2]{C_RESET} 🏛️ NIP ASN / PNS Decoder     (18-digit: Birthdate, TMT CPNS, BUP Pensiun)")
         print(f" {C_GREEN}[3]{C_RESET} 📱 Phone & E-Wallet VA       (Telco, PSTN Area, DANA/OVO/GoPay/Shopee)")
         print(f" {C_GREEN}[4]{C_RESET} 🚗 Plat Nomor TNKB Decoder   (Regional A-PY, Jadetabek Sub-Code, Samsat)")
         print(f" {C_GREEN}[5]{C_RESET} 🔎 Indonesian Registry Dorks (PDDikti, Mahkamah Agung, LPSE, AHU)")
-        print(f" {C_GREEN}[6]{C_RESET} 📋 Interactive Indo CLI Menu (Full interactive wizard)")
+        print(f" {C_GREEN}[6]{C_RESET} ⚠️ Data Bocor & Stealers     (Live XposedOrNot & Hudson Rock breach check)")
+        print(f" {C_GREEN}[7]{C_RESET} 🗄️ Local Database Search     (Search private offline CSVs/dumps via FTS5)")
+        print(f" {C_GREEN}[8]{C_RESET} 📥 Import CSV into Local DB  (Fast FTS5 indexer for private datasets)")
+        print(f" {C_GREEN}[9]{C_RESET} 📊 Local DB Stats & Guide    (View records count, indexed files & paths)")
+        print(f" {C_GREEN}[10]{C_RESET}📋 Interactive Indo CLI Menu  (Full interactive wizard)")
         print(f"\n {C_YELLOW}[B]{C_RESET} Back to Previous Menu")
         print(f" {C_RED}[0]{C_RESET} Return to Main Menu")
 
@@ -449,6 +459,28 @@ def workflow_indonesia():
                 run_command_interactive(cmd)
                 pause_prompt()
         elif choice == "6":
+            email_target = input(f"\n{C_WHITE}Enter target Email to check breaches & stealers:{C_RESET} ").strip()
+            if email_target:
+                clear_screen()
+                run_command_interactive([sys.executable, cli_script, "--email", email_target])
+                pause_prompt()
+        elif choice == "7":
+            query = input(f"\n{C_WHITE}Enter search term (Name, NIK, Phone, Email, Plat):{C_RESET} ").strip()
+            if query:
+                clear_screen()
+                run_command_interactive([sys.executable, cli_script, "--db-search", query])
+                pause_prompt()
+        elif choice == "8":
+            csv_path = input(f"\n{C_WHITE}Enter absolute or relative path to CSV/TSV file:{C_RESET} ").strip().strip('"')
+            if csv_path:
+                clear_screen()
+                run_command_interactive([sys.executable, cli_script, "--db-import", csv_path])
+                pause_prompt()
+        elif choice == "9":
+            clear_screen()
+            run_command_interactive([sys.executable, cli_script, "--db-stats"])
+            pause_prompt()
+        elif choice == "10":
             clear_screen()
             run_command_interactive([sys.executable, cli_script])
             pause_prompt()
@@ -476,13 +508,13 @@ def workflow_instagram():
             pause_prompt()
         elif choice == "2":
             clear_screen()
-            sid_bat = ROOT_DIR / "Osintgram" / "login_session_id.bat"
-            run_command_interactive(["cmd.exe", "/c", str(sid_bat)])
+            set_sess_script = ROOT_DIR / "Osintgram" / "scripts" / "set_session.py"
+            run_command_interactive([str(ENGINES["osintgram"]["python"]), str(set_sess_script)])
             pause_prompt()
         elif choice == "3":
             clear_screen()
-            login_bat = ROOT_DIR / "Osintgram" / "login_instagram.bat"
-            run_command_interactive(["cmd.exe", "/c", str(login_bat)])
+            login_script = ROOT_DIR / "Osintgram" / "scripts" / "instagrapi_login.py"
+            run_command_interactive([str(ENGINES["osintgram"]["python"]), str(login_script)])
             pause_prompt()
         elif choice == "4":
             sess_path = ROOT_DIR / "Osintgram" / "config" / "instagrapi_session.json"
@@ -543,9 +575,9 @@ def target_investigation_menu():
         print_banner("Target-Oriented Investigation")
         print(f"{C_WHITE}{C_BOLD}Select your target intelligence type to start a guided workflow:{C_RESET}\n")
         print(f" {C_CYAN}[1]{C_RESET} 👤 Username OSINT         - Sherlock & Maigret (Dual-Engine Recon)")
-        print(f" {C_CYAN}[2]{C_RESET} 📧 Email Intelligence     - Holehe (120+ sites) & GHunt (Google/Gaia)")
+        print(f" {C_CYAN}[2]{C_RESET} 📧 Email & Data Bocor     - Holehe, GHunt, XposedOrNot & Stealers")
         print(f" {C_CYAN}[3]{C_RESET} 📱 Phone Number Intel     - Numint (Carrier/Spam) & Indo Telco/VA")
-        print(f" {C_CYAN}[4]{C_RESET} 🇮🇩 Indonesia Suite         - NIK KTP, NIP ASN, Plat Nomor & Dorks")
+        print(f" {C_CYAN}[4]{C_RESET} 🇮🇩 Indonesia Regional     - NIK KTP, NIP ASN, Plat Nomor & Dorks")
         print(f" {C_CYAN}[5]{C_RESET} 📸 Instagram Recon        - Osintgram Web Dashboard & Session Auth")
         print(f" {C_CYAN}[6]{C_RESET} 🕵️ Persona Footprint       - Snoop Evidence-Backed Public Profile Audit")
         print(f"\n {C_YELLOW}[B]{C_RESET} Back to Main Menu")
@@ -582,7 +614,7 @@ def target_investigation_menu():
 def individual_engines_menu():
     while True:
         print_banner("Individual Engine Workspaces")
-        print(f"{C_WHITE}{C_BOLD}Launch any of the 8 engines with custom parameters or interactive CLI:{C_RESET}\n")
+        print(f"{C_WHITE}{C_BOLD}Launch any of the 8 engines directly in console:{C_RESET}\n")
         print(f" {C_GREEN}[1]{C_RESET} Sherlock Engine       - {ENGINES['sherlock']['desc']}")
         print(f" {C_GREEN}[2]{C_RESET} Maigret Engine        - {ENGINES['maigret']['desc']}")
         print(f" {C_GREEN}[3]{C_RESET} Holehe Engine         - {ENGINES['holehe']['desc']}")
@@ -600,23 +632,76 @@ def individual_engines_menu():
         if choice == "0":
             sys.exit(0)
 
-        bat_map = {
-            "1": "sherlock.bat",
-            "2": "maigret.bat",
-            "3": "holehe.bat",
-            "4": "ghunt.bat",
-            "5": "numint.bat",
-            "6": "snoop.bat",
-            "7": "indo_osint.bat",
-            "8": "login_instagram.bat",
-        }
-
-        if choice in bat_map:
-            bat_file = ROOT_DIR / bat_map[choice]
-            clear_screen()
-            print(f"{C_CYAN}[+] Launching {bat_file.name}...{C_RESET}\n")
-            run_command_interactive(["cmd.exe", "/c", str(bat_file)])
+        clear_screen()
+        if choice == "1":
+            if not check_engine_health("sherlock"):
+                print(f"{C_RED}[ERROR] Sherlock venv not found. Run Setup first.{C_RESET}")
+            else:
+                u = input(f"{C_WHITE}Enter username to scan (or Enter for --help):{C_RESET} ").strip()
+                cmd = [str(ENGINES["sherlock"]["exe"]), "--folderoutput", str(REPORTS_DIR), "--csv", "--xlsx", u] if u else [str(ENGINES["sherlock"]["exe"]), "--help"]
+                run_command_interactive(cmd)
             pause_prompt()
+
+        elif choice == "2":
+            if not check_engine_health("maigret"):
+                print(f"{C_RED}[ERROR] Maigret venv not found. Run Setup first.{C_RESET}")
+            else:
+                u = input(f"{C_WHITE}Enter username to scan (or Enter for --help):{C_RESET} ").strip()
+                cmd = [str(ENGINES["maigret"]["exe"]), "--folderoutput", str(REPORTS_DIR), "--html", "--pdf", u] if u else [str(ENGINES["maigret"]["exe"]), "--help"]
+                run_command_interactive(cmd)
+            pause_prompt()
+
+        elif choice == "3":
+            if not check_engine_health("holehe"):
+                print(f"{C_RED}[ERROR] Holehe venv not found. Run Setup first.{C_RESET}")
+            else:
+                e = input(f"{C_WHITE}Enter email to check (or Enter for --help):{C_RESET} ").strip()
+                cmd = [str(ENGINES["holehe"]["exe"]), "--only-used", e] if e else [str(ENGINES["holehe"]["exe"]), "--help"]
+                run_command_interactive(cmd)
+            pause_prompt()
+
+        elif choice == "4":
+            if not check_engine_health("ghunt"):
+                print(f"{C_RED}[ERROR] GHunt venv not found. Run Setup first.{C_RESET}")
+            else:
+                print(f" {C_GREEN}[1]{C_RESET} Check Email (`ghunt email <email>`)")
+                print(f" {C_GREEN}[2]{C_RESET} Check GAIA ID (`ghunt gaia <id>`)")
+                print(f" {C_GREEN}[3]{C_RESET} Authenticate Cookies (`ghunt login`)")
+                sub = input(f"{C_CYAN}Select GHunt command [1-3]:{C_RESET} ").strip()
+                if sub == "1":
+                    em = input("Enter email: ").strip()
+                    run_command_interactive([str(ENGINES["ghunt"]["exe"]), "email", em])
+                elif sub == "2":
+                    gaia = input("Enter GAIA ID: ").strip()
+                    run_command_interactive([str(ENGINES["ghunt"]["exe"]), "gaia", gaia])
+                elif sub == "3":
+                    run_command_interactive([str(ENGINES["ghunt"]["exe"]), "login"])
+            pause_prompt()
+
+        elif choice == "5":
+            if not check_engine_health("numint"):
+                print(f"{C_RED}[ERROR] Numint venv not found. Run Setup first.{C_RESET}")
+            else:
+                p = input(f"{C_WHITE}Enter phone number (e.g. +628123456789 or Enter for --help):{C_RESET} ").strip()
+                cmd = [str(ENGINES["numint"]["exe"]), "scan", p] if p else [str(ENGINES["numint"]["exe"]), "--help"]
+                run_command_interactive(cmd)
+            pause_prompt()
+
+        elif choice == "6":
+            if not check_engine_health("snoop"):
+                print(f"{C_RED}[ERROR] Snoop venv not found. Run Setup first.{C_RESET}")
+            else:
+                n = input(f"{C_WHITE}Enter person name / handle (or Enter for doctor):{C_RESET} ").strip()
+                cmd = [str(ENGINES["snoop"]["exe"]), n] if n else [str(ENGINES["snoop"]["exe"]), "doctor"]
+                run_command_interactive(cmd)
+            pause_prompt()
+
+        elif choice == "7":
+            run_command_interactive([sys.executable, str(ENGINES["indo_osint"]["cli"])])
+            pause_prompt()
+
+        elif choice == "8":
+            workflow_instagram()
 
 
 # ==============================================================================
@@ -657,7 +742,6 @@ def launch_web_service(service_key: str):
     print(f"{C_GREEN}[+] Starting {name} in a new window...{C_RESET}")
     if sys.platform == "win32":
         cmd_str = " ".join(f'"{c}"' for c in service["cmd"])
-        # Launch in a detached new cmd window
         subprocess.Popen(
             f'start "{name} - Port {port}" {cmd_str}',
             cwd=str(service["cwd"]),
@@ -738,13 +822,11 @@ def reports_viewer_menu():
         print_banner("Evidence Locker & Reports Viewer")
         print(f"{C_WHITE}{C_BOLD}Centralized Intelligence Reports Archive (`reports/`):{C_RESET}\n")
 
-        # Discover all report files in reports/ and subdirectories
         patterns = ["*.html", "*.csv", "*.xlsx", "*.json", "*.txt", "*.pdf"]
         files = []
         for pat in patterns:
             files.extend(list(REPORTS_DIR.glob(f"**/{pat}")))
 
-        # Exclude dummy/hidden files
         files = [f for f in files if f.name not in [".gitkeep", ".gitignore"] and not f.name.startswith(".")]
         files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
 
@@ -763,7 +845,7 @@ def reports_viewer_menu():
         print(f" {C_GREEN}[O]{C_RESET} Open Reports Folder in Windows Explorer")
         print(f" {C_GREEN}[L]{C_RESET} Open Latest Generated Report")
         print(f" {C_GREEN}[#]{C_RESET} Enter file number to open specific report")
-        print(f"\n {C_YELLOW}[B]{C_RESET} Back to Main Menu")
+        print(f"\n {C_YELLOW}[B]{C_RESET} Back to Previous Menu")
         print(f" {C_RED}[0]{C_RESET} Exit Application")
 
         choice = input(f"\n{C_CYAN}Select option:{C_RESET} ").strip().lower()
@@ -806,6 +888,53 @@ def reports_viewer_menu():
 # 5. SYSTEM DIAGNOSTICS & SETUP
 # ==============================================================================
 
+def run_automated_setup():
+    """Provision virtual environments and install all dependencies for all 8 engines."""
+    print_banner("Automated Setup Wizard")
+    print(f"{C_WHITE}{C_BOLD}Provisioning isolated virtual environments & installing dependencies:{C_RESET}\n")
+
+    steps = [
+        ("Sherlock", "sherlock", ["-e", str(ROOT_DIR / "sherlock")]),
+        ("Maigret", "maigret", ["-e", str(ROOT_DIR / "maigret")]),
+        ("Osintgram", "Osintgram", ["-r", str(ROOT_DIR / "Osintgram" / "requirements.txt")]),
+        ("Numint", "numint", ["-e", f"{ROOT_DIR / 'numint'}[web,pdf]"]),
+        ("Snoop", "snoop", ["-e", f"{ROOT_DIR / 'snoop'}[pdf]"]),
+        ("Holehe", "holehe", ["-e", str(ROOT_DIR / "holehe")]),
+        ("GHunt", "GHunt", ["-e", str(ROOT_DIR / "GHunt")]),
+    ]
+
+    for idx, (name, folder, install_args) in enumerate(steps, 1):
+        venv_dir = ROOT_DIR / folder / ".venv"
+        print(f"[{idx}/{len(steps)}] Setting up {name}...")
+        if not venv_dir.exists():
+            print(f"      Creating virtual environment: {venv_dir}...")
+            subprocess.run([sys.executable, "-m", "venv", str(venv_dir)])
+
+        pip_exe = venv_dir / "Scripts" / "pip.exe"
+        if pip_exe.exists():
+            print(f"      Installing dependencies...")
+            subprocess.run([str(pip_exe), "install", "--upgrade", "pip"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            res = subprocess.run([str(pip_exe), "install"] + install_args)
+            if res.returncode == 0:
+                print(f"      {C_GREEN}[OK] {name} setup complete.{C_RESET}\n")
+            else:
+                print(f"      {C_YELLOW}[!] {name} installed with warnings.{C_RESET}\n")
+        else:
+            print(f"      {C_RED}[ERROR] Failed to locate pip in {venv_dir}{C_RESET}\n")
+
+    # Osintgram initial config
+    cfg_ex = ROOT_DIR / "Osintgram" / "config" / "credentials.ini.example"
+    cfg_dst = ROOT_DIR / "Osintgram" / "config" / "credentials.ini"
+    if cfg_ex.exists() and not cfg_dst.exists():
+        shutil.copy(cfg_ex, cfg_dst)
+        print("      Created Osintgram credentials.ini template.")
+
+    print(f"{C_GREEN}{C_BOLD}[✓] Indonesia OSINT Suite (indo_osint) uses standard library [READY].{C_RESET}\n")
+    print(f"{C_GREEN}{C_BOLD}======================================================================{C_RESET}")
+    print(f"{C_GREEN}{C_BOLD}             AUTOMATED SETUP COMPLETED SUCCESSFULLY!                  {C_RESET}")
+    print(f"{C_GREEN}{C_BOLD}======================================================================{C_RESET}")
+
+
 def system_diagnostics_menu():
     while True:
         print_banner("System Diagnostics & Health Check")
@@ -831,7 +960,7 @@ def system_diagnostics_menu():
         print(f" Python Executable: {sys.executable} ({sys.version.split()[0]})")
         print(f" Toolkit Root: {ROOT_DIR}\n")
 
-        print(f" {C_GREEN}[1]{C_RESET} Run Automated Setup Wizard   (setup.bat - provision all venvs)")
+        print(f" {C_GREEN}[1]{C_RESET} Run Automated Setup Wizard   (Provision / Repair all 8 venvs)")
         print(f" {C_GREEN}[2]{C_RESET} Launch OSINT Terminal Shell  (cmd with all 8 venvs in PATH)")
         print(f" {C_GREEN}[R]{C_RESET} Refresh Diagnostics")
         print(f"\n {C_YELLOW}[B]{C_RESET} Back to Main Menu")
@@ -846,15 +975,12 @@ def system_diagnostics_menu():
             continue
 
         if choice == "1":
-            setup_bat = ROOT_DIR / "setup.bat"
             clear_screen()
-            print(f"{C_CYAN}[+] Running {setup_bat.name}...{C_RESET}\n")
-            run_command_interactive(["cmd.exe", "/c", str(setup_bat)])
+            run_automated_setup()
             pause_prompt()
         elif choice == "2":
             clear_screen()
             print(f"{C_CYAN}[+] Spawning Developer OSINT Terminal...{C_RESET}")
-            # Inject all venv Scripts directories into PATH
             scripts_paths = [
                 str(ROOT_DIR / "sherlock" / ".venv" / "Scripts"),
                 str(ROOT_DIR / "maigret" / ".venv" / "Scripts"),
@@ -877,8 +1003,8 @@ def main_menu():
     while True:
         print_banner("Main Navigation")
         print(f"{C_WHITE}{C_BOLD}Select an operation mode to begin:{C_RESET}\n")
-        print(f" {C_CYAN}[1]{C_RESET} 🎯 {C_BOLD}TARGET INVESTIGATION{C_RESET}       (Guided search: Username, Email, Phone, NIK, etc.)")
-        print(f" {C_CYAN}[2]{C_RESET} ⚙️  {C_BOLD}INDIVIDUAL WORKSPACES{C_RESET}      (Direct CLI for Sherlock, Maigret, Holehe, etc.)")
+        print(f" {C_CYAN}[1]{C_RESET} 🎯 {C_BOLD}TARGET INVESTIGATION{C_RESET}       (Guided search: Username, Email/Breaches, Phone, NIK, etc.)")
+        print(f" {C_CYAN}[2]{C_RESET} ⚙️  {C_BOLD}INDIVIDUAL WORKSPACES{C_RESET}      (Direct CLI for Sherlock, Maigret, Holehe, GHunt, etc.)")
         print(f" {C_CYAN}[3]{C_RESET} 🌐 {C_BOLD}WEB DASHBOARDS HUB{C_RESET}         (One-Click Launch: Ports 5000, 8000, 8080, 8005)")
         print(f" {C_CYAN}[4]{C_RESET} 📁 {C_BOLD}EVIDENCE & REPORTS LOCKER{C_RESET}  (View generated HTML/CSV/XLSX intelligence)")
         print(f" {C_CYAN}[5]{C_RESET} 🩺 {C_BOLD}HEALTH & SYSTEM DIAGNOSTICS{C_RESET}(Verify all 8 venvs, run setup, or open shell)")
@@ -913,16 +1039,54 @@ def main_menu():
 if __name__ == "__main__":
     import argparse
 
+    # Quick direct tool CLI dispatcher (run.bat sherlock / maigret / holehe / ghunt / numint / snoop / indo)
+    if len(sys.argv) > 1:
+        first_arg = sys.argv[1].lower().strip()
+        remaining_args = sys.argv[2:]
+
+        if first_arg == "sherlock":
+            cmd = [str(ENGINES["sherlock"]["exe"]), "--folderoutput", str(REPORTS_DIR), "--csv", "--xlsx"] + remaining_args if remaining_args else [str(ENGINES["sherlock"]["exe"]), "--help"]
+            sys.exit(run_command_interactive(cmd))
+        elif first_arg == "maigret":
+            cmd = [str(ENGINES["maigret"]["exe"]), "--folderoutput", str(REPORTS_DIR), "--html", "--pdf"] + remaining_args if remaining_args else [str(ENGINES["maigret"]["exe"]), "--help"]
+            sys.exit(run_command_interactive(cmd))
+        elif first_arg == "holehe":
+            cmd = [str(ENGINES["holehe"]["exe"])] + remaining_args if remaining_args else [str(ENGINES["holehe"]["exe"]), "--help"]
+            sys.exit(run_command_interactive(cmd))
+        elif first_arg == "ghunt":
+            cmd = [str(ENGINES["ghunt"]["exe"])] + remaining_args if remaining_args else [str(ENGINES["ghunt"]["exe"]), "--help"]
+            sys.exit(run_command_interactive(cmd))
+        elif first_arg == "numint":
+            cmd = [str(ENGINES["numint"]["exe"])] + remaining_args if remaining_args else [str(ENGINES["numint"]["exe"]), "--help"]
+            sys.exit(run_command_interactive(cmd))
+        elif first_arg == "snoop":
+            cmd = [str(ENGINES["snoop"]["exe"])] + remaining_args if remaining_args else [str(ENGINES["snoop"]["exe"]), "doctor"]
+            sys.exit(run_command_interactive(cmd))
+        elif first_arg in ["indo", "indo_osint"]:
+            cmd = [sys.executable, str(ENGINES["indo_osint"]["cli"])] + remaining_args
+            sys.exit(run_command_interactive(cmd))
+        elif first_arg == "osintgram":
+            if "web" in remaining_args:
+                launch_web_service("osintgram")
+                sys.exit(0)
+            workflow_instagram()
+            sys.exit(0)
+
     parser = argparse.ArgumentParser(
         description="OSINT Toolkit - All-in-One Master Navigator (8 Engines)",
         add_help=True
     )
     parser.add_argument("--diag", "-d", action="store_true", help="Print system health & environment diagnostics")
+    parser.add_argument("--setup", action="store_true", help="Run automated setup for all 8 engines")
     parser.add_argument("--web", "-w", choices=["maigret", "osintgram", "numint", "snoop", "all"], help="Launch a web dashboard")
     parser.add_argument("--username", "-u", type=str, help="Quick dual-scan for username (Sherlock + Maigret)")
-    parser.add_argument("--email", "-e", type=str, help="Quick dual-scan for email address (Holehe + GHunt)")
+    parser.add_argument("--email", "-e", type=str, help="Quick email reconnaissance (Holehe + GHunt)")
+    parser.add_argument("--breach", type=str, help="Live Data Bocor and infostealer malware check (XposedOrNot + Hudson Rock)")
     parser.add_argument("--phone", "-p", type=str, help="Quick phone intelligence scan (Numint + Indo OSINT)")
     parser.add_argument("--nik", type=str, help="Decode 16-digit Indonesian NIK KTP")
+    parser.add_argument("--db-search", type=str, help="Search local private offline database (FTS5)")
+    parser.add_argument("--db-import", type=str, help="Import a CSV dataset into local private database")
+    parser.add_argument("--db-stats", action="store_true", help="Show local private database statistics")
 
     args, unknown = parser.parse_known_args()
 
@@ -941,6 +1105,10 @@ if __name__ == "__main__":
                 print(f" {e['name']:<16} | {status}")
             print(f"\n Python: {sys.executable} ({sys.version.split()[0]})")
             sys.exit(0 if all_ok else 1)
+
+        elif args.setup:
+            run_automated_setup()
+            sys.exit(0)
 
         elif args.web:
             if args.web == "all":
@@ -962,6 +1130,10 @@ if __name__ == "__main__":
             run_command_interactive([str(ENGINES["ghunt"]["exe"]), "email", args.email])
             sys.exit(0)
 
+        elif args.breach:
+            run_command_interactive([sys.executable, str(ENGINES["indo_osint"]["cli"]), "--email", args.breach])
+            sys.exit(0)
+
         elif args.phone:
             print(f"{C_CYAN}{C_BOLD}=== QUICK PHONE INTEL: {args.phone} ==={C_RESET}")
             if check_engine_health("numint"):
@@ -971,6 +1143,18 @@ if __name__ == "__main__":
 
         elif args.nik:
             run_command_interactive([sys.executable, str(ENGINES["indo_osint"]["cli"]), "--nik", args.nik])
+            sys.exit(0)
+
+        elif args.db_search:
+            run_command_interactive([sys.executable, str(ENGINES["indo_osint"]["cli"]), "--db-search", args.db_search])
+            sys.exit(0)
+
+        elif args.db_import:
+            run_command_interactive([sys.executable, str(ENGINES["indo_osint"]["cli"]), "--db-import", args.db_import])
+            sys.exit(0)
+
+        elif args.db_stats:
+            run_command_interactive([sys.executable, str(ENGINES["indo_osint"]["cli"]), "--db-stats"])
             sys.exit(0)
 
         else:

@@ -49,7 +49,9 @@ Osintgram/config/*
 **/.env.*
 !**/.env.example
 
-# Database files
+# Database files & local private datasets
+data/
+**/data/
 *.sqlite
 *.sqlite3
 *.db
