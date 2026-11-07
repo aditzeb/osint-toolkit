@@ -17,8 +17,11 @@ This workspace contains 8 OSINT engines, completely configured with isolated Pyt
 
 In this root folder:
 
-- **`menu.bat`** - **Master Interactive Menu**: Launch any of the 8 engines, web UIs, or login helpers.
+- **`run.bat`** - **1-Click Master Launcher**: Starts the interactive All-in-One Navigator (`app.py`).
+- **`menu.bat`** - **Master Interactive Menu**: Launches `app.py` or falls back to full categorized Batch menu (`--batch`).
+- **`app.py`** - **All-in-One Console Hub**: Guided workflows (Username, Email, Phone, NIK, Instagram, Snoop), Web Hub, Evidence Locker & Diagnostics.
 - **`setup.bat`** - **1-Click Automated Setup**: Provisions all virtual environments and installs all dependencies.
+- **`reports/`** - **Evidence Locker**: Centralized folder where all generated dossiers, CSVs, XLSX, and HTML scans are organized.
 - **`sherlock.bat`** - Run Sherlock directly (prompts for username or accepts CLI flags).
 - **`maigret.bat`** - Run Maigret directly (prompts for username or accepts CLI flags).
 - **`osintgram.bat`** - Starts the Osintgram web server and opens `http://127.0.0.1:8000`.

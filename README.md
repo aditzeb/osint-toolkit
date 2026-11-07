@@ -31,6 +31,7 @@ This suite integrates seven open-source projects alongside a custom Indonesian r
 
 ## ✨ Features
 
+- **All-in-One Master Navigator (`app.py` & `run.bat` / `menu.bat`)**: Unified interactive control center with rich hierarchical menus, target-oriented guided workflows, dual-engine sequential scans, web dashboard manager, evidence locker, and diagnostic self-healing.
 - **Isolated Virtual Environments (`.venv`)**: Each external engine maintains its own isolated Python virtual environment, eliminating dependency version conflicts (e.g. `pydantic`, `aiohttp`, `fastapi`, `httpx`, `pillow`).
 - **Interactive Master Menu (`menu.bat`)**: Single control center with 14 quick actions to scan usernames, check emails, inspect phone numbers, audit person footprints, run Indonesian regional intelligence, or launch Web UIs.
 - **One-Click Automated Setup (`setup.bat`)**: Sets up virtual environments and installs all required dependencies in a single click.
@@ -67,41 +68,53 @@ The script automatically provisions `.venv` for each tool, installs dependencies
 
 ## 🎮 How to Use
 
-### Master Control Center
-Double-click **`menu.bat`** to open the interactive menu:
+### 🌟 All-in-One Master Navigator (`run.bat` / `menu.bat` / `app.py`)
+Simply double-click **`run.bat`** (or **`menu.bat`**) to launch the interactive Master Navigator. 
+
+The application automatically launches the rich, color-coded **`app.py`** console interface (or seamlessly falls back to pure Batch mode if run with `--batch` or in environments without Python):
+
 ```text
-======================================================================
-                           OSINT TOOLKIT
-  Sherlock | Maigret | Osintgram | Numint | Snoop | Holehe | GHunt
-                       + INDONESIA OSINT SUITE
-======================================================================
+============================================================================
+   🔍  OSINT TOOLKIT - ALL-IN-ONE MASTER CONTROL CENTER (WINDOWS 11)   
+   Sherlock | Maigret | Osintgram | Numint | Snoop | Holehe | GHunt | ID
+============================================================================
+ 📍 Navigation: Main Navigation
+----------------------------------------------------------------------------
+Select an operation mode to begin:
 
- --- USERNAME & SOCIAL OSINT ---
- [1]  Sherlock       - Scan username across 400+ platforms (CLI)
- [2]  Maigret        - Scan username dossier across 5,900+ sites (CLI)
- [3]  Maigret Web    - Launch Maigret Web Graph UI (Port 5000)
+ [1] 🎯 TARGET INVESTIGATION       (Guided search: Username, Email, Phone, NIK, etc.)
+ [2] ⚙️  INDIVIDUAL WORKSPACES      (Direct CLI for Sherlock, Maigret, Holehe, etc.)
+ [3] 🌐 WEB DASHBOARDS HUB         (One-Click Launch: Ports 5000, 8000, 8080, 8005)
+ [4] 📁 EVIDENCE & REPORTS LOCKER  (View generated HTML/CSV/XLSX intelligence)
+ [5] 🩺 HEALTH & SYSTEM DIAGNOSTICS(Verify all 8 venvs, run setup, or open shell)
 
- --- INSTAGRAM RECONNAISSANCE ---
- [4]  Osintgram Web  - Launch Osintgram Web Dashboard (Port 8000)
- [5]  Insta Login    - Authenticate Instagram (Username/Pass + 2FA)
- [6]  Insta Session  - Authenticate Instagram (Browser Session ID)
-
- --- PHONE, EMAIL & PERSONA INTELLIGENCE ---
- [7]  Numint         - Phone Number Intelligence Profile (CLI)
- [8]  Numint Web     - Launch Numint Web Dashboard (Port 8080)
- [9]  Snoop          - Person Footprint & Evidence Audit (CLI)
- [10] Snoop Web      - Launch Snoop Web Workspace (Port 8005)
- [11] Holehe         - Email Registration Check across 120+ sites (CLI)
- [12] GHunt          - Google / Gmail Account OSINT (CLI)
-
- --- INDONESIA REGIONAL OSINT SUITE ---
- [13] Indo OSINT     - NIK KTP, NIP ASN, Phone/E-Wallet VA, Plat Nomor & PDDikti
-
- --- SYSTEM & TOOLS ---
- [14] OSINT Terminal - Command Prompt with all 8 tool environments
- [0]  Exit
-======================================================================
+ [0] 🚪 Exit Application
+----------------------------------------------------------------------------
 ```
+
+### 🧭 Hierarchical Navigation Features
+
+1. **🎯 Target Investigation (Multi-Engine Orchestration)**:
+   - **Username OSINT**: Run Sherlock (400+ platforms), Maigret (5,900+ sites), or a **Dual-Engine Scan** executing both in sequence with reports saved to `reports/`.
+   - **Email Intelligence**: Run Holehe (120+ platforms) and GHunt (Google Account, Gaia ID, Maps reviews) individually or via **Dual Email Recon**.
+   - **Phone Intelligence**: Numint global profile + Indonesian Telco & E-Wallet VA generator (DANA, OVO, GoPay, ShopeePay, LinkAja).
+   - **Indonesia Regional Intelligence**: 16-digit NIK KTP, 18-digit NIP ASN, Plat Nomor TNKB, and PDDikti/Mahkamah Agung/LPSE public registry dorks.
+   - **Instagram Reconnaissance**: Launch Osintgram Web UI, login via credentials, or authenticate via browser `sessionid`.
+   - **Persona Footprint Audit**: Run Snoop standard or deep evidence-backed investigation.
+
+2. **🌐 Web Dashboards Hub (One-Click Launch & Monitor)**:
+   - Live port inspection checks if services are already running on ports `5000`, `8000`, `8080`, and `8005`.
+   - Launch individual dashboards or trigger **Option [5]** to launch all four web UIs simultaneously and open them in your browser!
+
+3. **📁 Evidence Locker & Reports Viewer**:
+   - Centralizes and catalogs all exported files (`.html`, `.csv`, `.xlsx`, `.pdf`, `.json`) in `reports/`.
+   - Open reports immediately in your default browser or spreadsheet viewer.
+   - One-click button to open the `reports/` folder in Windows File Explorer.
+
+4. **🩺 System Diagnostics & Developer Shell**:
+   - Live status check for all 8 virtual environments and dependencies.
+   - One-click trigger for `setup.bat` to provision or repair missing environments.
+   - Spawns an **OSINT Developer Terminal** with all eight `.venv\Scripts` loaded into `PATH`.
 
 ---
 
@@ -187,8 +200,11 @@ Osintgram uses Instagram data backends. To use the built-in free `instagrapi` ba
 
 ```text
 OSINT-Toolkit/
-├── menu.bat                       # Master interactive CLI menu (all 8 engines)
+├── run.bat                        # 1-Click All-in-One Master Launcher
+├── menu.bat                       # Master CLI & Batch menu (launches app.py or fallback)
+├── app.py                         # All-in-One Interactive Navigator (guided workflows & hub)
 ├── setup.bat                      # 1-click automated dependency installer
+├── reports/                       # Centralized evidence locker for generated dossiers
 ├── sherlock.bat                   # Sherlock launcher
 ├── maigret.bat                    # Maigret launcher
 ├── osintgram.bat                  # Osintgram Web server launcher
